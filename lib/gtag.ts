@@ -8,10 +8,10 @@ export const pageview = (url: string) => {
   }
 };
 
-// Kütüphane tanımlarıyla çakışmaması için en esnek tanım:
 declare global {
   interface Window {
     gtag: (...args: any[]) => void;
-    dataLayer: any; // 'any' kullanarak kütüphane içindeki katı kuralları bypass ediyoruz
+    // Hata veren satırı şununla değiştir:
+    dataLayer?: Object[]; 
   }
 }
