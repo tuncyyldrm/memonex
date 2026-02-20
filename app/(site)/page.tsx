@@ -1,9 +1,41 @@
+// app/page.tsx
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import Image from "next/image";
 import { stripHtml, formatDate } from "@/lib/utils";
+import { Metadata } from "next";
 
-// Veri çekme fonksiyonunu bileşen dışına taşıyarak temiz tutuyoruz
+// 1. STATİK METADATA: Ana sayfa için SEO başlıkları
+export const metadata: Metadata = {
+  title: "Memonex3D | Isparta 3D Baskı ve Endüstriyel Tasarım Merkezi",
+  description: "Isparta'da yüksek hassasiyetli 3D baskı, hızlı prototipleme ve özel endüstriyel tasarım çözümleri. Fikirlerinizi milimetrik hassasiyetle somut gerçekliğe dönüştürüyoruz.",
+  alternates: {
+    canonical: "https://memonex3d.com",
+  },
+  openGraph: {
+    title: "Memonex3D - Geleceği Şekillendiren Üretim",
+    description: "Endüstriyel standartlarda 3D baskı ve prototipleme hizmetleri.",
+    url: "https://memonex3d.com",
+    siteName: "Memonex3D",
+    images: [
+      {
+        url: "/og-default.jpg", // public klasöründeki varsayılan görsel
+        width: 1200,
+        height: 630,
+        alt: "Memonex3D 3D Baskı Atölyesi",
+      },
+    ],
+    locale: "tr_TR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Memonex3D | 3D Baskı Çözümleri",
+    description: "Hayal ettiğiniz her şeyi 3D üretim teknolojileriyle hayata geçiriyoruz.",
+    images: ["/og-default.jpg"],
+  },
+};
+
 async function getData() {
   const [blogRes, productRes] = await Promise.all([
     supabase.from("blog_posts")
@@ -22,12 +54,48 @@ async function getData() {
 export default async function Home() {
   const { posts, products } = await getData();
 
+  // 2. SCHEMA.ORG: Google'ın işletmeyi tanıması için (LocalBusiness)
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "Memonex3D",
+    "image": "https://memonex3d.com/og-default.jpg",
+    "@id": "https://memonex3d.com",
+    "url": "https://memonex3d.com",
+    "telephone": "+905312084897",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Merkez", // Varsa açık adresini buraya ekle
+      "addressLocality": "Isparta",
+      "addressCountry": "TR"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 37.7648, // Isparta yaklaşık koordinatları (isteğe bağlı)
+      "longitude": 30.5566
+    },
+    "openingHoursSpecification": {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+      "opens": "09:00",
+      "closes": "19:00"
+    },
+    "sameAs": [
+      "https://www.instagram.com/memonex3d", // Varsa sosyal medya linklerini ekle
+      "https://wa.me/905312084897"
+    ]
+  };
+
   return (
     <div className="bg-white min-h-screen font-sans selection:bg-blue-600 selection:text-white">
+      {/* Schema Script */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       
       {/* --- HERO SECTION --- */}
       <section className="relative pt-32 pb-24 px-6 text-center bg-slate-50 overflow-hidden">
-        {/* Daha belirgin bir derinlik için çift katmanlı aura */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[700px] bg-blue-100/30 rounded-full blur-[140px] -z-10 animate-pulse" />
         
         <div className="max-w-5xl mx-auto">
@@ -79,7 +147,7 @@ export default async function Home() {
                 {product.image ? (
                   <Image 
                     src={product.image} 
-                    alt={product.name} 
+                    alt={`${product.name} - Memonex3D 3D Baskı`} 
                     fill 
                     priority={false}
                     className="object-cover transition-transform duration-[1.5s] group-hover:scale-110"
@@ -88,7 +156,6 @@ export default async function Home() {
                 ) : (
                   <div className="w-full h-full flex items-center justify-center font-black text-slate-200 text-8xl italic">M3D</div>
                 )}
-                {/* Image Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </div>
 
@@ -132,7 +199,7 @@ export default async function Home() {
                 <div className="aspect-[4/3] w-full rounded-[2.5rem] overflow-hidden mb-10 relative shadow-2xl">
                   <Image 
                     src={post.featured_image || "/placeholder-blog.jpg"} 
-                    alt={post.title} 
+                    alt={`${post.title} - Memonex3D Blog`} 
                     fill
                     className="object-cover grayscale brightness-75 group-hover:grayscale-0 group-hover:brightness-100 transition-all duration-1000 group-hover:scale-105" 
                   />
