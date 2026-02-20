@@ -21,8 +21,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!product) return { title: "Ürün Bulunamazdı | Memonex3D" };
 
-  // Tip güvenliği için 'as string' eklemek veya string kontrolü yapmak iyi olur
-  const ogImage = product.image ? [product.image as string] : ["/og-default.jpg"];
+// app/products/[slug]/page.tsx içindeki ilgili satır
+const ogImage = product.image ? [product.image] : ["/og-default.jpg"];
 
   return {
     title: `${product.name} | Memonex3D`,
