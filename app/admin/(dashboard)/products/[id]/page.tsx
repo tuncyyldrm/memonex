@@ -68,7 +68,8 @@ export default function ProductEditor({ params }: Props) {
       setLoading(true);
       // 'media' bucket ismini ve 'products' klasörünü gönderiyoruz
       const url = await uploadImage(file, 'media', 'products');
-      setFormData(prev => ({ ...prev, image: url }));
+      // 71. satırı şu şekilde değiştirerek 'null' ihtimaline karşı boş string garantisi veriyoruz:
+      setFormData(prev => ({ ...prev, image: url || '' }));
     } catch (err: any) {
       console.error("Ana görsel yüklenemedi:", err);
       alert(`Görsel yüklenemedi: ${err.message || 'Bucket izinlerini kontrol edin.'}`);
@@ -76,8 +77,7 @@ export default function ProductEditor({ params }: Props) {
       setLoading(false);
     }
   };
-
-  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     
@@ -86,8 +86,15 @@ export default function ProductEditor({ params }: Props) {
       const uploadPromises = Array.from(files).map(file => 
         uploadImage(file, 'media', 'products')
       );
-      const urls = await Promise.all(uploadPromises);
-      setFormData(prev => ({ ...prev, gallery: [...prev.gallery, ...urls] }));
+      const results = await Promise.all(uploadPromises);
+      
+      // Sadece null olmayan (başarılı) URL'leri filtrele
+      const validUrls = results.filter((url): url is string => url !== null);
+      
+      setFormData(prev => ({ 
+        ...prev, 
+        gallery: [...prev.gallery, ...validUrls] 
+      }));
     } catch (err: any) {
       console.error("Galeri yükleme hatası:", err);
       alert("Bazı görseller yüklenemedi. Lütfen tekrar deneyin.");
@@ -105,14 +112,15 @@ export default function ProductEditor({ params }: Props) {
 
   // --- KAYDETME FONKSİYONU ---
 
-  const handleSave = async () => {
+const handleSave = async () => {
     if (!formData.name || !formData.price) return alert('İsim ve Fiyat zorunludur!');
     
     setLoading(true);
     const slug = slugify(formData.name);
+    
     const payload = { 
       ...formData, 
-      price: parseFloat(formData.price), 
+      price: parseFloat(formData.price) || 0, // NaN olmasını engeller
       slug 
     };
 
