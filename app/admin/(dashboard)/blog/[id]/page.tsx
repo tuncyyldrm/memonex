@@ -181,15 +181,17 @@ export default function BlogEditor({ params }: { params: Promise<{ id: string }>
     .ql-editor h2 { font-weight: 800; color: #0f172a; margin-top: 2rem; }
   `}</style>
   
-  {/* @ts-ignore - ReactQuill ref prop uyumsuzluğunu gidermek için */}
-  <ReactQuill
-    ref={quillRef}
-    theme="snow"
-    value={content}
-    onChange={setContent}
-    modules={modules}
-    placeholder="İçeriğinizi oluşturun..."
-  />
+{/* @ts-ignore */}
+<ReactQuill
+  {...({
+    ref: quillRef,
+    theme: "snow",
+    value: content,
+    onChange: setContent,
+    modules: modules,
+    placeholder: "İçeriğinizi oluşturun..."
+  } as any)}
+/>
 </div>
       </div>
     </div>
