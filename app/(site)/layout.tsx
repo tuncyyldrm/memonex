@@ -2,6 +2,8 @@ import "../globals.css";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 import { GoogleAnalytics } from '@next/third-parties/google';
+import GoogleAnalyticsTracker from "@/components/GoogleAnalyticsTracker"; // Yeni ekledik
+import { Suspense } from "react"; // SearchParams için gerekli
 
 export const metadata = {
   title: "Memonex 3D | Yeni Nesil Üretim Merkezi",
@@ -23,8 +25,12 @@ export default function RootLayout({
 
   return (
     <html lang="tr" suppressHydrationWarning>
-      {/* className'i sildik, sadece suppressHydrationWarning bıraktık */}
       <body suppressHydrationWarning>
+        {/* Sayfa yenilenmeden yapılan geçişleri GA4'e bildiren takipçi */}
+        <Suspense fallback={null}>
+          <GoogleAnalyticsTracker />
+        </Suspense>
+
         <div className="flex flex-col min-h-screen selection:bg-blue-600 selection:text-white">
           <Navbar />
           
@@ -32,6 +38,7 @@ export default function RootLayout({
             {children}
           </main>
 
+          {/* --- FOOTER --- */}
           <footer className="bg-white border-t border-slate-100 pt-24 pb-12 px-6">
             <div className="max-w-7xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
@@ -83,6 +90,8 @@ export default function RootLayout({
             </div>
           </footer>
         </div>
+        
+        {/* Google Analytics Ana Scripti */}
         <GoogleAnalytics gaId="G-CW05QPYXS3" />
       </body>
     </html>
