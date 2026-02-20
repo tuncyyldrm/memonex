@@ -104,7 +104,7 @@ export default function BlogEditor({ params }: { params: Promise<{ id: string }>
     if (!title || !content) return alert('Başlık ve içerik gereklidir!');
     
     setLoading(true);
-    const slug = slugify(title, { lower: true, strict: true });
+    const slug = slugify(title);
     const excerpt = content.replace(/<[^>]*>/g, '').substring(0, 160).trim() + '...';
 
     // İçerikteki ilk resmi featured_image olarak ayarla
