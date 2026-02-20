@@ -172,23 +172,25 @@ export default function BlogEditor({ params }: { params: Promise<{ id: string }>
           className="w-full p-6 text-2xl md:text-3xl font-black border border-slate-200 rounded-[2rem] outline-none focus:ring-4 focus:ring-blue-50 transition-all"
         />
 
-        <div className="bg-white border border-slate-200 rounded-[2.5rem] overflow-hidden shadow-sm">
-          <style>{`
-            .ql-toolbar.ql-snow { border: none; border-bottom: 1px solid #f1f5f9; padding: 1.5rem; background: #fafafa; }
-            .ql-container.ql-snow { border: none; font-size: 1.1rem; }
-            .ql-editor { min-height: 550px; padding: 2.5rem; line-height: 1.8; color: #334155; }
-            .ql-editor img { border-radius: 1.5rem; margin: 2rem 0; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); max-width: 100%; height: auto; }
-            .ql-editor h2 { font-weight: 800; color: #0f172a; margin-top: 2rem; }
-          `}</style>
-          <ReactQuill
-            ref={quillRef}
-            theme="snow"
-            value={content}
-            onChange={setContent}
-            modules={modules}
-            placeholder="İçeriğinizi oluşturun..."
-          />
-        </div>
+<div className="bg-white border border-slate-200 rounded-[2.5rem] overflow-hidden shadow-sm">
+  <style>{`
+    .ql-toolbar.ql-snow { border: none; border-bottom: 1px solid #f1f5f9; padding: 1.5rem; background: #fafafa; }
+    .ql-container.ql-snow { border: none; font-size: 1.1rem; }
+    .ql-editor { min-height: 550px; padding: 2.5rem; line-height: 1.8; color: #334155; }
+    .ql-editor img { border-radius: 1.5rem; margin: 2rem 0; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); max-width: 100%; height: auto; }
+    .ql-editor h2 { font-weight: 800; color: #0f172a; margin-top: 2rem; }
+  `}</style>
+  
+  {/* @ts-ignore - ReactQuill ref prop uyumsuzluğunu gidermek için */}
+  <ReactQuill
+    ref={quillRef}
+    theme="snow"
+    value={content}
+    onChange={setContent}
+    modules={modules}
+    placeholder="İçeriğinizi oluşturun..."
+  />
+</div>
       </div>
     </div>
   );
