@@ -13,7 +13,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Navigasyon linkleri
   const navLinks = [
     { name: "Katalog", href: "/products" },
     { name: "Satış & Mağaza", href: "/satis-ve-magaza" },
@@ -23,8 +22,9 @@ export default function RootLayout({
   ];
 
   return (
-    <html lang="tr">
-      <body className="antialiased">
+    <html lang="tr" suppressHydrationWarning>
+      {/* className'i sildik, sadece suppressHydrationWarning bıraktık */}
+      <body suppressHydrationWarning>
         <div className="flex flex-col min-h-screen selection:bg-blue-600 selection:text-white">
           <Navbar />
           
@@ -32,7 +32,6 @@ export default function RootLayout({
             {children}
           </main>
 
-          {/* --- FOOTER --- */}
           <footer className="bg-white border-t border-slate-100 pt-24 pb-12 px-6">
             <div className="max-w-7xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
@@ -50,7 +49,10 @@ export default function RootLayout({
                   <ul className="space-y-5">
                     {navLinks.map((link) => (
                       <li key={link.name}>
-                        <Link href={link.href} className="text-slate-400 text-xs font-bold hover:text-blue-600 transition-colors uppercase tracking-widest">
+                        <Link 
+                          href={link.href} 
+                          className="text-slate-400 text-xs font-bold hover:text-blue-600 transition-colors uppercase tracking-widest"
+                        >
                           {link.name}
                         </Link>
                       </li>
@@ -62,7 +64,9 @@ export default function RootLayout({
                   <h4 className="font-black text-[10px] uppercase tracking-[0.4em] text-slate-900">Atölye</h4>
                   <p className="text-slate-500 text-xs font-bold leading-loose uppercase tracking-tighter">
                     Isparta, Türkiye<br/>
-                    <span className="text-blue-600 lowercase font-medium italic">tuncyyldrm@gmail.com</span>
+                    <span className="text-blue-600 lowercase font-medium italic underline underline-offset-4">
+                      tuncyyldrm@gmail.com
+                    </span>
                   </p>
                 </div>
               </div>
@@ -72,15 +76,13 @@ export default function RootLayout({
                   © 2026 Memonex3D. Gelecek Burada Basılıyor.
                 </p>
                 <div className="flex gap-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                  <a href="https://instagram.com/memonex3d" target="_blank" className="hover:text-blue-600 transition-colors">Instagram</a>
-                  <a href="https://tiktok.com/@memonex3d" target="_blank" className="hover:text-blue-600 transition-colors">Tiktok</a>
+                  <a href="https://instagram.com/memonex3d" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">Instagram</a>
+                  <a href="https://tiktok.com/@memonex3d" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">Tiktok</a>
                 </div>
               </div>
             </div>
           </footer>
         </div>
-
-        {/* Google Analytics - Body kapanmadan hemen önce */}
         <GoogleAnalytics gaId="G-CW05QPYXS3" />
       </body>
     </html>
