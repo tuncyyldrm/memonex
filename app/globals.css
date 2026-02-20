@@ -1,26 +1,74 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@layer components {
+  /* 1. ANA KAPSAICI DÜZENLEMESİ */
+  .custom-content {
+    @apply antialiased text-slate-700 w-full;
+    /* Taşmayı engelleyen çekirdek ayarlar */
+    overflow-wrap: break-word !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+    hyphens: auto;
+    /* Tailwind Prose'un genişlik kısıtlamasını kaldır */
+    max-width: none !important; 
+  }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* 2. PARAGRAFLAR VE METİN AKIŞI */
+  .custom-content p { 
+    @apply text-base md:text-lg text-slate-600 leading-[1.8] mb-6 font-medium;
+    display: block !important;
+    width: 100% !important;
+    white-space: normal !important;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  /* 3. BAŞLIKLAR (Taşmaya en müsait yerler) */
+  .custom-content h1, 
+  .custom-content h2, 
+  .custom-content h3 {
+    @apply font-black text-slate-900 tracking-tighter uppercase;
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+    line-height: 1.1 !important;
+  }
+
+  .custom-content h2 { @apply text-2xl md:text-4xl mb-8 mt-16 italic; }
+  .custom-content h3 { @apply text-xl md:text-2xl mb-6 mt-12; }
+
+  /* 4. LİSTELER VE İÇERİKLER */
+  .custom-content ul { 
+    @apply list-none mb-10 space-y-4 text-slate-600 text-lg; 
+  }
+
+  .custom-content ul li {
+    @apply relative pl-10 leading-relaxed;
+    overflow-wrap: break-word; /* Liste öğeleri taşmasın */
+  }
+  
+  .custom-content ul li::before {
+    content: "→";
+    @apply absolute left-0 text-blue-600 font-black text-xl;
+  }
+
+  /* 5. BLOCKQUOTE VE GÖRSELLER */
+  .custom-content blockquote { 
+    @apply border-l-[12px] border-blue-600 pl-6 md:pl-8 pr-6 py-10 my-16 bg-slate-50 
+           text-slate-900 text-xl md:text-2xl font-black italic rounded-r-[2rem] md:rounded-r-[3rem]; 
+  }
+  
+  .custom-content img { 
+    @apply rounded-[1.5rem] md:rounded-[3rem] shadow-2xl my-16 mx-auto border border-slate-50 w-full h-auto object-cover; 
+  }
+  
+  /* 6. SATIR İÇİ KOD (Taşmayı en çok tetikleyen öğe) */
+  .custom-content code { 
+    @apply bg-blue-50 text-blue-700 px-2 py-1 rounded-lg font-mono text-sm font-bold border border-blue-100;
+    /* Uzun kodları aşağı kır */
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { @apply bg-slate-50; }
+::-webkit-scrollbar-thumb { @apply bg-slate-200 rounded-full hover:bg-blue-600 transition-colors; }
