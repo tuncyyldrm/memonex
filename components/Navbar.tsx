@@ -96,7 +96,7 @@ export default function Navbar() {
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex flex-col h-full px-10 pt-32 pb-12 overflow-y-auto">
+        <div className="flex flex-col h-full px-10 pt-16 pb-12 overflow-y-auto">
           <div className="flex flex-col gap-6">
             <span className="text-[10px] font-black tracking-[0.4em] text-blue-600 uppercase opacity-50 mb-4">Navigasyon</span>
             {navLinks.map((link) => (
