@@ -1,17 +1,17 @@
-// app/(site)/layout.tsx
 import "../globals.css";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
-import GoogleAnalyticsTracker from "@/components/GoogleAnalyticsTracker"; 
+import Script from "next/script"; // Gerekli: Script bileşeni
 import { Suspense } from "react"; 
+import GoogleAnalyticsTracker from "@/components/GoogleAnalyticsTracker"; 
+import { GA_TRACKING_ID } from "@/lib/gtag";
 
 export const metadata = {
   title: {
     default: "Memonex 3D | Yeni Nesil Üretim Merkezi",
-    template: "%s | Memonex 3D" // Alt sayfalarda "Katalog | Memonex 3D" şeklinde görünür
+    template: "%s | Memonex 3D"
   },
   description: "Yüksek hassasiyetli 3D baskı, prototipleme ve özel tasarım çözümleri.",
-  // SEO: Temel OpenGraph verileri
   openGraph: {
     type: 'website',
     locale: 'tr_TR',
@@ -31,6 +31,29 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <>
+      {/* 1. Google Analytics Kütüphanesini Yükle */}
+      <Script
+        strategy="afterInteractive"
+        src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
+      />
+
+      {/* 2. Google Analytics Başlatma Yapılandırması */}
+      <Script
+        id="gtag-init"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_TRACKING_ID}', {
+              page_path: window.location.pathname,
+            });
+          `,
+        }}
+      />
+
+      {/* 3. Sayfa Geçişlerini Takip Eden Bileşen */}
       <Suspense fallback={null}>
         <GoogleAnalyticsTracker />
       </Suspense>
@@ -38,7 +61,6 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       <div className="flex flex-col min-h-screen selection:bg-blue-600 selection:text-white">
         <Navbar />
         
-        {/* Main içeriği ARIA standartlarına uygun hale getirdik */}
         <main id="main-content" className="flex-grow bg-[#FCFCFD] pt-20">
           {children}
         </main>
@@ -74,7 +96,6 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
 
               <div className="space-y-8">
                 <h4 className="font-black text-[10px] uppercase tracking-[0.4em] text-slate-900">Atölye</h4>
-                {/* SEO: Adres bilgilerini semantic hale getirdik */}
                 <address className="not-italic text-slate-500 text-xs font-bold leading-loose uppercase tracking-tighter">
                   Isparta, Türkiye<br/>
                   <a href="mailto:tuncyyldrm@gmail.com" className="text-blue-600 lowercase font-medium italic underline underline-offset-4 hover:text-slate-900 transition-colors">
