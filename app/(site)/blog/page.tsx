@@ -1,16 +1,20 @@
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import Image from "next/image"; // Next Image eklendi
+import Image from "next/image";
 import { stripHtml, formatDate, getFirstImage } from "@/lib/utils";
+import { Metadata } from "next";
 
-interface BlogPost {
-  id: string;
-  title: string;
-  slug: string;
-  content: string;
-  excerpt?: string | null;
-  created_at: string;
-}
+export const metadata: Metadata = {
+  title: "Teknik Günlük ve 3D İnovasyon Blogu | Memonex3D",
+  description: "3D baskı teknolojileri, filament özellikleri ve malzeme bilimi üzerine teknik makaleler. Isparta 3D baskı merkezi Memonex3D'den güncel notlar.",
+  alternates: { canonical: "https://memonex3d.com/blog" },
+  openGraph: {
+    title: "Memonex3D Teknik Blog",
+    description: "Geleceği şekillendiren 3D teknolojileri hakkında her şey.",
+    url: "https://memonex3d.com/blog",
+    images: ["/blog-og.jpg"],
+  }
+};
 
 export default async function BlogPage() {
   const { data: posts } = await supabase
@@ -19,13 +23,27 @@ export default async function BlogPage() {
     .eq("published", true)
     .order("created_at", { ascending: false });
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "itemListElement": posts?.map((post, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "url": `https://memonex3d.com/blog/${post.slug}`,
+      "name": post.title
+    }))
+  };
+
   return (
     <div className="bg-slate-50 min-h-screen py-32 px-6 relative overflow-hidden">
-      {/* Dekoratif Arka Plan (Ana sayfa ile bütünlük) */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[500px] bg-blue-100/30 rounded-full blur-[120px] -z-10" />
 
       <div className="max-w-7xl mx-auto">
-        {/* Başlık Alanı */}
         <header className="mb-24 text-center">
           <div className="inline-block px-4 py-1.5 mb-6 bg-white border border-slate-200 rounded-full text-[10px] font-black text-blue-600 uppercase tracking-[0.3em] shadow-sm">
             Teknik Günlük & İnovasyon
@@ -40,48 +58,44 @@ export default async function BlogPage() {
 
         {!posts?.length ? (
           <div className="text-center py-40 bg-white/50 backdrop-blur-sm rounded-[4rem] border border-dashed border-slate-300">
-            <div className="text-slate-200 text-8xl mb-6 select-none italic font-black">M3D</div>
-            <p className="text-slate-400 font-bold uppercase tracking-[0.3em] text-xs text-balance">
-               Gelecek hikayelerimiz için hazırlık yapıyoruz...
-            </p>
+             <p className="text-slate-400 font-bold uppercase tracking-[0.3em] text-xs">Gelecek hikayelerimiz için hazırlık yapıyoruz...</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-16">
-            {posts.map((post) => {
+            {posts.map((post, index) => {
               const thumbnail = getFirstImage(post.content);
-              const preview = post.excerpt
-                ? stripHtml(post.excerpt)
-                : stripHtml(post.content).substring(0, 120) + "...";
+              
+              // KRİTİK DÜZELTME: Önce stripHtml ile temizliyoruz, sonra güvenle kesiyoruz.
+              const cleanContent = stripHtml(post.excerpt || post.content);
+              const preview = cleanContent.length > 85 
+                ? cleanContent.substring(0, 85) + "..." 
+                : cleanContent;
 
               return (
                 <Link key={post.id} href={`/blog/${post.slug}`} className="group block">
                   <article className="h-full bg-white border border-slate-100 rounded-[3.5rem] overflow-hidden transition-all duration-700 hover:shadow-[0_40px_80px_-15px_rgba(37,99,235,0.1)] hover:-translate-y-3 flex flex-col">
                     
-                    {/* Görsel Alanı */}
                     <div className="aspect-[16/10] w-full overflow-hidden bg-slate-100 relative">
                       {thumbnail ? (
                         <Image 
                           src={thumbnail} 
-                          alt={post.title} 
+                          alt={`${post.title} - Memonex3D Blog`}
                           fill
-                          className="object-cover grayscale-[0.5] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-110"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          priority={index < 3}
+                          className="object-cover grayscale-[0.3] group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-110"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-200 font-black text-5xl italic select-none">
-                          M3D
-                        </div>
+                        <div className="w-full h-full flex items-center justify-center text-slate-200 font-black text-5xl italic">M3D</div>
                       )}
-                      {/* Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
 
-                    {/* İçerik Alanı */}
                     <div className="p-10 flex flex-col flex-1">
                       <div className="flex items-center gap-4 mb-8">
                         <span className="w-10 h-[2px] bg-blue-600 group-hover:w-16 transition-all duration-500"></span>
-                        <span className="text-slate-400 text-[9px] font-black uppercase tracking-[0.3em] italic">
+                        <time dateTime={post.created_at} className="text-slate-400 text-[9px] font-black uppercase tracking-[0.3em] italic">
                           {formatDate(post.created_at)}
-                        </span>
+                        </time>
                       </div>
                       
                       <h2 className="text-2xl font-black text-slate-900 leading-tight mb-6 group-hover:text-blue-600 transition-colors tracking-tight uppercase">
@@ -94,7 +108,7 @@ export default async function BlogPage() {
 
                       <div className="mt-auto pt-6 border-t border-slate-50 flex items-center justify-between">
                         <span className="text-slate-900 font-black text-[10px] uppercase tracking-[0.3em] group-hover:text-blue-600 transition-all">
-                          KEŞFET +
+                          OKU +
                         </span>
                         <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500">
                           <span className="text-lg">→</span>

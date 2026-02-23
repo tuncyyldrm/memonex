@@ -1,3 +1,4 @@
+// components/GoogleAnalyticsTracker.tsx
 'use client';
 
 import { usePathname, useSearchParams } from 'next/navigation';

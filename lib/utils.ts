@@ -1,13 +1,13 @@
 import { supabase } from "@/lib/supabase";
 
 /**
- * Metni URL uyumlu hale getirir (SEO Dostu)
- * Türkçe karakter desteği ve özel sembol temizliği geliştirildi.
+ * Metni URL uyumlu hale getirir (SEO Dostu Slug)
+ * Türkçe karakter desteği ve normalizasyon geliştirildi.
  */
-export const slugify = (text: string) => {
+export const slugify = (text: string): string => {
   const trMap: { [key: string]: string } = {
     'ğ': 'g', 'Ğ': 'G', 'ş': 's', 'Ş': 'S', 'ü': 'u', 'Ü': 'U',
-    'ö': 'o', 'Ö': 'O', 'ç': 'c', 'Ç': 'C', 'ı': 'i', 'İ': 'I'
+    'ö': 'o', 'Ö': 'O', 'ç': 'c', 'Ç': 'C', 'ı': 'i', 'İ': 'i' // İ -> i düzeltildi
   };
   
   let fixedText = text;
@@ -16,73 +16,103 @@ export const slugify = (text: string) => {
   });
 
   return fixedText
+    .normalize('NFD')                     // Aksanları ayırır
+    .replace(/[\u0300-\u036f]/g, "")      // Ayrılan aksanları siler
     .toLowerCase()
-    .replace(/[^\w\s-]/g, "") // Harf, rakam ve tire dışındaki her şeyi sil
-    .replace(/\s+/g, "-")      // Boşlukları tireye çevir
-    .replace(/-+/g, "-")      // Ardışık tireleri tekilleştir
+    .replace(/[^\w\s-]/g, "")             // Alfanümerik olmayanları sil
+    .replace(/\s+/g, "-")                 // Boşlukları tireye çevir
+    .replace(/-+/g, "-")                  // Ardışık tireleri tekilleştir
     .trim();
 };
 
 /**
- * Tarihi Türkiye formatında döner (Örn: 20 Şub 2026)
+ * Tarihi Türkiye formatında döner (Örn: 23 Şub 2026)
  */
-export const formatDate = (dateStr: string) => {
+export const formatDate = (dateStr: string | null | undefined): string => {
   if (!dateStr) return "";
-  return new Date(dateStr).toLocaleDateString("tr-TR", {
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return "";
+
+  return date.toLocaleDateString("tr-TR", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
-}
-
-/**
- * HTML etiketlerini temizler ve metni ham hale getirir
- */
-export const stripHtml = (html: string) => {
-  if (!html) return "";
-  // Etiketleri sil ve HTML entity'leri ( &nbsp; vb.) temizle
-  return html
-    .replace(/<[^>]*>/g, "")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .trim();
 };
 
 /**
- * HTML içinden ilk görselin URL'sini ayıklar
+ * GÖRSELDEKİ HATAYI KESİN ÇÖZEN FONKSİYON:
+ * HTML etiketlerini ve tüm (metin/sayısal) entity'leri temizler.
  */
-export const getFirstImage = (html: string) => {
+export const stripHtml = (html: string): string => {
+  if (!html) return "";
+
+  // 1. Önce HTML etiketlerini temizle
+  let text = html.replace(/<[^>]*>/g, "");
+
+  // 2. Yaygın Entity'leri manuel eşle (Görseldeki &#39; ve &nbsp; dahil)
+  const entities: { [key: string]: string } = {
+    '&nbsp;': ' ',
+    '&amp;': '&',
+    '&quot;': '"',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&#39;': "'",
+    '&#039;': "'",
+    '&rsquo;': "'",
+    '&lsquo;': "'",
+    '&ldquo;': '"',
+    '&rdquo;': '"',
+    '&ndash;': '-',
+    '&mdash;': '-'
+  };
+
+  Object.keys(entities).forEach(entity => {
+    text = text.replace(new RegExp(entity, 'g'), entities[entity]);
+  });
+
+  // 3. Regex ile kalan tüm sayısal entity'leri (&#1234;) ve metin entity'leri temizle
+  text = text.replace(/&(#?[a-z0-9]+);/gi, "");
+
+  // 4. Fazla boşlukları tekilleştir
+  return text.replace(/\s+/g, " ").trim();
+};
+
+/**
+ * HTML içeriği içinden ilk görselin URL'sini ayıklar.
+ */
+export const getFirstImage = (html: string): string | null => {
   if (!html) return null;
   const match = html.match(/<img[^>]+src="([^">]+)"/);
   return match ? match[1] : null;
 };
 
 /**
- * Supabase Storage'a dosya yükler ve Public URL döner
- * Hata yönetimi ve dosya adı benzersizleştirme eklendi.
+ * Supabase Storage'a güvenli dosya yüklemesi yapar.
  */
 export const uploadImage = async (
   file: File, 
   bucket: string = 'media', 
   folder: string = 'products'
-) => {
+): Promise<string | null> => {
+  if (!file.type.startsWith('image/')) {
+    console.error("Hata: Geçersiz resim formatı.");
+    return null;
+  }
+
   try {
     const fileExt = file.name.split('.').pop();
     const cleanBaseName = slugify(file.name.replace(/\.[^/.]+$/, ""));
-    // Benzersizlik için: klasör/timestamp-isim.uzantı
     const fileName = `${folder}/${Date.now()}-${cleanBaseName}.${fileExt}`;
 
-    const { data, error } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from(bucket)
       .upload(fileName, file, {
         cacheControl: '3600',
-        upsert: false // Güvenlik için: mevcut dosyanın üzerine yazma
+        upsert: false 
       });
 
-    if (error) throw error;
+    if (uploadError) throw uploadError;
 
     const { data: { publicUrl } } = supabase.storage
       .from(bucket)
@@ -90,7 +120,7 @@ export const uploadImage = async (
 
     return publicUrl;
   } catch (error) {
-    console.error("Yükleme sırasında hata oluştu:", error);
-    return null; // Hata durumunda null dönerek bileşeni kırma
+    console.error("Supabase Storage Yükleme Hatası:", error);
+    return null;
   }
 };

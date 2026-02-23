@@ -1,4 +1,4 @@
-// app/page.tsx
+// app/(site)/page.tsx
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import Image from "next/image";
@@ -93,11 +93,11 @@ export default async function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      
+
       {/* --- HERO SECTION --- */}
       <section className="relative pt-32 pb-24 px-6 text-center bg-slate-50 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[700px] bg-blue-100/30 rounded-full blur-[140px] -z-10 animate-pulse" />
-        
+
         <div className="max-w-5xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-2 mb-10 bg-white border border-slate-200 rounded-full shadow-sm">
             <span className="relative flex h-2 w-2">
@@ -108,9 +108,10 @@ export default async function Home() {
           </div>
 
           <h1 className="text-6xl md:text-[9.5rem] font-black text-slate-900 tracking-tighter mb-10 leading-[0.8] drop-shadow-sm">
+            <span className="sr-only">Isparta 3D Baskı ve Prototipleme: </span>
             MEMONEX<span className="text-blue-600 italic">3D</span>
           </h1>
-          
+
           <p className="text-xl md:text-2xl text-slate-500 font-medium leading-relaxed mb-14 max-w-2xl mx-auto italic opacity-90">
             "Fikirlerinizi milimetrik hassasiyetle somut gerçekliğe dönüştüren yüksek teknoloji üretim merkezi."
           </p>
@@ -145,10 +146,10 @@ export default async function Home() {
             <Link key={product.id} href={`/products/${product.slug}`} className="group block">
               <div className="aspect-[1/1] bg-slate-100 rounded-[3rem] mb-8 overflow-hidden relative border border-slate-100 transition-all duration-700 group-hover:shadow-[0_40px_80px_-15px_rgba(37,99,235,0.15)] group-hover:-translate-y-3">
                 {product.image ? (
-                  <Image 
-                    src={product.image} 
-                    alt={`${product.name} - Memonex3D 3D Baskı`} 
-                    fill 
+                  <Image
+                    src={product.image}
+                    alt={`${product.name} - Endüstriyel 3D Baskı ve Üretim Isparta`}
+                    fill
                     priority={false}
                     className="object-cover transition-transform duration-[1.5s] group-hover:scale-110"
                     sizes="(max-width: 768px) 100vw, 33vw"
@@ -167,12 +168,12 @@ export default async function Home() {
                   <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-widest">3D Print</span>
                 </div>
                 <div className="flex items-center justify-between pt-6 border-t border-slate-100">
-                   <p className="text-slate-900 font-black text-2xl tracking-tighter">
-                     {new Intl.NumberFormat('tr-TR').format(product.price)} <span className="text-blue-600 text-sm italic ml-1">₺</span>
-                   </p>
-                   <div className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center group-hover:bg-slate-900 group-hover:border-slate-900 transition-all group-hover:text-white">
-                     <span className="text-xl">↗</span>
-                   </div>
+                  <p className="text-slate-900 font-black text-2xl tracking-tighter">
+                    {new Intl.NumberFormat('tr-TR').format(product.price)} <span className="text-blue-600 text-sm italic ml-1">₺</span>
+                  </p>
+                  <div className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center group-hover:bg-slate-900 group-hover:border-slate-900 transition-all group-hover:text-white">
+                    <span className="text-xl">↗</span>
+                  </div>
                 </div>
               </div>
             </Link>
@@ -183,11 +184,11 @@ export default async function Home() {
       {/* --- BLOG ÖNİZLEME (Teknik Günlük) --- */}
       <section id="blog" className="py-32 px-6 bg-slate-900 text-white rounded-[3rem] md:rounded-[5rem] mx-4 md:mx-8 my-12 overflow-hidden relative">
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[120px] -z-0 pointer-events-none" />
-        
+
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-24 gap-10">
             <div>
-              <h2 className="text-6xl md:text-8xl font-black tracking-tighter uppercase italic leading-[0.8] mb-6">TEKNİK<br/><span className="text-blue-500">GÜNLÜK</span></h2>
+              <h2 className="text-6xl md:text-8xl font-black tracking-tighter uppercase italic leading-[0.8] mb-6">TEKNİK<br /><span className="text-blue-500">GÜNLÜK</span></h2>
               <p className="text-slate-400 font-medium max-w-sm text-lg italic opacity-80">Malzeme bilimi ve 3D teknolojilerine dair derinlemesine incelemeler.</p>
             </div>
             <Link href="/blog" className="bg-white/5 border border-white/10 hover:bg-white hover:text-slate-900 px-14 py-6 rounded-[2rem] text-[11px] font-black uppercase tracking-[0.3em] transition-all shadow-2xl shadow-black/50">BLOGU KEŞFET</Link>
@@ -197,18 +198,19 @@ export default async function Home() {
             {posts.map((post) => (
               <Link key={post.id} href={`/blog/${post.slug}`} className="group flex flex-col h-full bg-white/[0.03] rounded-[3.5rem] p-6 border border-white/[0.05] hover:border-blue-500/30 transition-all duration-700">
                 <div className="aspect-[4/3] w-full rounded-[2.5rem] overflow-hidden mb-10 relative shadow-2xl">
-                  <Image 
-                    src={post.featured_image || "/placeholder-blog.jpg"} 
-                    alt={`${post.title} - Memonex3D Blog`} 
+                  <Image
+                    src={post.featured_image || "/placeholder-blog.jpg"}
+                    alt={`${post.title} - Memonex3D Blog`}
                     fill
-                    className="object-cover grayscale brightness-75 group-hover:grayscale-0 group-hover:brightness-100 transition-all duration-1000 group-hover:scale-105" 
+                    className="object-cover grayscale brightness-75 group-hover:grayscale-0 group-hover:brightness-100 transition-all duration-1000 group-hover:scale-105"
                   />
                 </div>
                 <div className="px-2 flex-grow flex flex-col">
                   <span className="text-blue-500 text-[10px] font-black tracking-[0.4em] uppercase mb-6 block">{formatDate(post.created_at)}</span>
                   <h3 className="text-2xl font-bold group-hover:text-blue-400 transition-colors mb-6 leading-tight uppercase tracking-tight">{post.title}</h3>
                   <p className="text-slate-400 text-sm line-clamp-3 leading-relaxed font-medium italic opacity-60 mb-8">
-                    {post.excerpt || stripHtml(post.content).substring(0, 100)}...
+                    {stripHtml(post.excerpt || post.content).slice(0, 85)}
+                    {(post.excerpt || post.content).length > 85 ? '...' : ''}
                   </p>
                   <div className="mt-auto pt-6 border-t border-white/10 text-xs font-black tracking-widest text-white/40 group-hover:text-blue-500 transition-colors uppercase">
                     İncele +
@@ -222,15 +224,15 @@ export default async function Home() {
 
       {/* --- CTA SECTION --- */}
       <section className="py-44 text-center bg-white px-6">
-          <div className="max-w-4xl mx-auto bg-slate-50 py-28 px-8 rounded-[6rem] border border-slate-100 relative group">
-            <div className="absolute top-0 right-0 w-32 h-32 border-r-8 border-t-8 border-blue-600/5 rounded-tr-[6rem] transition-all group-hover:border-blue-600/20" />
-            <h2 className="text-6xl md:text-8xl font-black mb-14 tracking-tighter uppercase leading-[0.85]">
-              HAYAL ET <br/> <span className="text-blue-600 italic">ÜRETELİM</span>.
-            </h2>
-            <Link href="https://wa.me/905312084897" target="_blank" className="inline-block bg-slate-900 text-white px-16 py-8 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] hover:bg-blue-600 hover:scale-105 transition-all shadow-2xl shadow-blue-900/10">
-              PROJENİ BAŞLAT
-            </Link>
-          </div>
+        <div className="max-w-4xl mx-auto bg-slate-50 py-28 px-8 rounded-[6rem] border border-slate-100 relative group">
+          <div className="absolute top-0 right-0 w-32 h-32 border-r-8 border-t-8 border-blue-600/5 rounded-tr-[6rem] transition-all group-hover:border-blue-600/20" />
+          <h2 className="text-6xl md:text-8xl font-black mb-14 tracking-tighter uppercase leading-[0.85]">
+            HAYAL ET <br /> <span className="text-blue-600 italic">ÜRETELİM</span>.
+          </h2>
+          <Link href="https://wa.me/905312084897" target="_blank" className="inline-block bg-slate-900 text-white px-16 py-8 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] hover:bg-blue-600 hover:scale-105 transition-all shadow-2xl shadow-blue-900/10">
+            PROJENİ BAŞLAT
+          </Link>
+        </div>
       </section>
     </div>
   );

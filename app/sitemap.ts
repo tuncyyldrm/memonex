@@ -1,38 +1,32 @@
 import { supabase } from "@/lib/supabase";
 import { MetadataRoute } from "next";
 
-// Canlı veri çekimini zorunlu kılıyoruz
-export const revalidate = 0;
-export const dynamic = "force-dynamic";
+// Sitemap'i her 12 saatte bir yeniden oluşturmak performansı artırır (Vercel/Next.js dostu)
+export const revalidate = 43200; 
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://memonex3d.com";
 
-  let products: any[] = [];
-  let posts: any[] = [];
+  // Tüm verileri paralel çekerek hızı artırıyoruz
+  const [productsRes, postsRes, pagesRes] = await Promise.all([
+    supabase.from("products").select("slug, created_at"),
+    supabase.from("blog_posts").select("slug, created_at").eq("published", true),
+    supabase.from("pages").select("slug, created_at") // Kurumsal sayfaları da ekledik
+  ]);
 
-  try {
-    // Tablo yapına göre sütun isimlerini güncelledik (updated_at yerine created_at)
-    const [productsRes, postsRes] = await Promise.all([
-      supabase.from("products").select("slug, created_at"),
-      supabase.from("blog_posts").select("slug, created_at").eq("published", true)
-    ]);
+  const products = productsRes.data || [];
+  const posts = postsRes.data || [];
+  const pages = pagesRes.data || [];
 
-    products = productsRes.data || [];
-    posts = postsRes.data || [];
-  } catch (error) {
-    console.error("Veri çekilirken hata oluştu:", error);
-  }
-
-  // 1. Statik Rotalar
+  // 1. Statik Ana Rotalar
   const staticPages: MetadataRoute.Sitemap = [
     { url: `${baseUrl}`, lastModified: new Date(), changeFrequency: "daily", priority: 1.0 },
     { url: `${baseUrl}/products`, lastModified: new Date(), changeFrequency: "daily", priority: 0.9 },
-    { url: `${baseUrl}/blog`, lastModified: new Date(), changeFrequency: "daily", priority: 0.9 },
+    { url: `${baseUrl}/blog`, lastModified: new Date(), changeFrequency: "daily", priority: 0.8 },
     { url: `${baseUrl}/iletisim`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
   ];
 
-  // 2. Ürünler (Tablondaki slug sütununu kullanır)
+  // 2. Ürün Rotaları
   const productEntries: MetadataRoute.Sitemap = products.map((p) => ({
     url: `${baseUrl}/products/${p.slug}`,
     lastModified: p.created_at ? new Date(p.created_at) : new Date(),
@@ -40,7 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  // 3. Bloglar
+  // 3. Blog Yazıları
   const blogEntries: MetadataRoute.Sitemap = posts.map((p) => ({
     url: `${baseUrl}/blog/${p.slug}`,
     lastModified: p.created_at ? new Date(p.created_at) : new Date(),
@@ -48,5 +42,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...productEntries, ...blogEntries];
+  // 4. Kurumsal/Dinamik Sayfalar (Hakkımızda, KVKK vs.)
+  const pageEntries: MetadataRoute.Sitemap = pages.map((p) => ({
+    url: `${baseUrl}/${p.slug}`, // Bunlar kök dizinde olduğu için direkt /slug
+    lastModified: p.created_at ? new Date(p.created_at) : new Date(),
+    changeFrequency: "monthly",
+    priority: 0.4, // Yasal sayfaların önceliği genellikle daha düşüktür
+  }));
+
+  return [...staticPages, ...productEntries, ...blogEntries, ...pageEntries];
 }

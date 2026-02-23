@@ -1,7 +1,31 @@
+// app/(site)/products/page.tsx
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import Image from "next/image"; // Performans için eklendi
-import { formatDate } from "@/lib/utils"; // Yardımcı fonksiyonlar
+import Image from "next/image";
+import { formatDate } from "@/lib/utils";
+import { Metadata } from "next";
+
+// 1. SEO METADATA
+export const metadata: Metadata = {
+  title: "3D Baskı Ürünleri Kataloğu | Memonex3D Isparta",
+  description: "Endüstriyel yedek parçalar, kişiye özel tasarımlar ve yüksek hassasiyetli 3D baskı modellerimizi inceleyin. Isparta'da profesyonel üretim çözümleri.",
+  alternates: {
+    canonical: "https://memonex3d.com/products",
+  },
+  openGraph: {
+    title: "Memonex3D Ürün Kataloğu - Profesyonel 3D Baskı Modelleri",
+    description: "Hayalinizdeki projeleri gerçeğe dönüştüren envanterimiz.",
+    url: "https://memonex3d.com/products",
+    images: [
+      {
+        url: "/og-products.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Memonex3D Ürün Kataloğu",
+      },
+    ],
+  },
+};
 
 interface Product {
   id: string;
@@ -19,8 +43,30 @@ export default async function ProductsPage() {
     .select("*")
     .order("created_at", { ascending: false });
 
+  // 2. SCHEMA.ORG (ItemList) - Google'ın ürünleri tanıması için
+  const itemListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Memonex3D Ürün Kataloğu",
+    "description": "3D Baskı ve tasarım ürünleri listesi",
+    "numberOfItems": products?.length || 0,
+    "itemListElement": products?.map((product, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "url": `https://memonex3d.com/products/${product.slug}`,
+      "name": product.name,
+      "image": product.image
+    }))
+  };
+
   return (
     <div className="bg-white min-h-screen py-24 px-6 relative overflow-hidden">
+      {/* Schema Script */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
+      />
+
       {/* Arka Plan Dekorasyonu */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-50/50 rounded-full blur-[120px] -z-10" />
       
@@ -31,7 +77,9 @@ export default async function ProductsPage() {
             <div className="inline-block px-3 py-1 mb-4 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-[0.2em] rounded-md">
               Memonex3D Envanter
             </div>
+            {/* SEO: H1 içine gizli anahtar kelime ekledik */}
             <h1 className="text-6xl md:text-7xl font-black text-slate-900 tracking-tighter uppercase leading-[0.9]">
+              <span className="sr-only">Isparta 3D Baskı Ürünleri: </span>
               3D <span className="text-blue-600 italic">KATALOG</span>
             </h1>
             <p className="text-slate-500 text-xl font-medium leading-relaxed mt-6 italic opacity-80">
@@ -52,14 +100,16 @@ export default async function ProductsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-20">
-            {products.map((product: Product) => (
+            {products.map((product: Product, index: number) => (
               <div key={product.id} className="group flex flex-col">
                 <Link href={`/products/${product.slug}`} className="relative aspect-square bg-slate-50 rounded-[3.5rem] overflow-hidden border border-slate-100 mb-8 transition-all duration-700 group-hover:shadow-[0_50px_100px_-20px_rgba(37,99,235,0.15)] group-hover:-translate-y-3">
                   {product.image ? (
                     <Image 
                       src={product.image} 
-                      alt={product.name}
+                      alt={`${product.name} - 3D Baskı ve Tasarım Isparta`}
                       fill
+                      // PERFORMANS: İlk 3 ürüne priority vererek LCP'yi düşürüyoruz
+                      priority={index < 3}
                       className="object-cover transition-transform duration-1000 group-hover:scale-110"
                       sizes="(max-width: 768px) 100vw, 33vw"
                     />
@@ -93,9 +143,10 @@ export default async function ProductsPage() {
                       DETAYLARI GÖR
                     </Link>
                     <Link 
-                      href="/iletisim" 
+                      href="https://wa.me/905312084897" 
+                      target="_blank"
                       className="flex-1 bg-slate-50 text-slate-400 flex items-center justify-center rounded-2xl border border-slate-100 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-100 transition-all group/btn"
-                      title="Özel Teklif Al"
+                      title="Hızlı WhatsApp Hattı"
                     >
                       <span className="text-xl group-hover/btn:scale-125 transition-transform">✉</span>
                     </Link>
@@ -107,7 +158,7 @@ export default async function ProductsPage() {
         )}
       </div>
 
-      {/* Sipariş Notu Section - "3D Printing on Demand" */}
+      {/* Sipariş Notu Section */}
       <section className="mt-40 max-w-7xl mx-auto px-4 md:px-0">
         <div className="bg-slate-900 rounded-[4rem] p-12 md:p-24 text-white text-center relative overflow-hidden shadow-[0_60px_100px_-20px_rgba(0,0,0,0.2)]">
           <div className="relative z-10">
@@ -116,16 +167,14 @@ export default async function ProductsPage() {
               Özel Bir <br/> Projen mi Var?
             </h2>
             <p className="text-slate-400 text-lg md:text-xl font-medium max-w-2xl mx-auto mb-12 leading-relaxed italic opacity-80">
-              Kendi STL/OBJ dosyalarınızı gönderin; endüstriyel standartlarda, istediğiniz materyal ve hassasiyette hayata geçirelim.
+              Kendi STL/OBJ dosyalarınızı gönderin; endüstriyel standartlarda hayata geçirelim.
             </p>
             <Link href="https://wa.me/905312084897" target="_blank" className="inline-block bg-blue-600 text-white px-14 py-6 rounded-3xl font-black text-xs uppercase tracking-[0.3em] hover:bg-white hover:text-slate-900 transition-all shadow-2xl active:scale-95">
               DOSYANI GÖNDER & TEKLİF AL
             </Link>
           </div>
           
-          {/* Arka plan dekoratif elementler */}
           <div className="absolute top-0 left-0 w-96 h-96 bg-blue-600/10 rounded-full -translate-y-1/2 -translate-x-1/2 blur-[100px]" />
-          <div className="absolute bottom-0 right-0 w-64 h-64 bg-blue-400/5 rounded-full translate-y-1/2 translate-x-1/2 blur-[80px]" />
         </div>
       </section>
     </div>
