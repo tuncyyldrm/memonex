@@ -81,8 +81,8 @@ export default async function BlogPage() {
           <div className="inline-block px-4 py-1.5 mb-6 bg-white border border-slate-200 rounded-full text-[10px] font-black text-blue-600 uppercase tracking-[0.3em] shadow-sm">
             {s?.logo_subtext || "Teknik Günlük & İnovasyon"}
           </div>
-          <h1 className="text-6xl md:text-[5rem] font-black text-slate-900 tracking-tighter mb-8 uppercase leading-[0.9]">
-            {brandName}<span className="text-blue-600 italic">{brandSuffix}</span> BLOG
+          <h1 className="text-5xl md:text-[4.5rem] font-black text-slate-900 tracking-tighter mb-10 leading-[0.8] drop-shadow-sm uppercase">
+            {brandName}<span className="text-blue-600 italic block md:inline ml-0 md:ml-4">{brandSuffix}</span> BLOG
           </h1>
           <p className="text-slate-500 text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed italic opacity-80">
             &quot;{s?.brand_slogan || "Fikirleri gerçekliğe dönüştüren teknoloji notları."}&quot;
