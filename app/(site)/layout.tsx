@@ -1,26 +1,51 @@
 import "../globals.css";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
-import Script from "next/script"; // Gerekli: Script bileşeni
+import Script from "next/script";
 import { Suspense } from "react"; 
 import GoogleAnalyticsTracker from "@/components/GoogleAnalyticsTracker"; 
 import { GA_TRACKING_ID } from "@/lib/gtag";
+import { supabase } from "@/lib/supabase";
+import { Metadata } from "next";
 
-export const metadata = {
-  title: {
-    default: "Memonex 3D | Yeni Nesil Üretim Merkezi",
-    template: "%s | Memonex 3D"
-  },
-  description: "Yüksek hassasiyetli 3D baskı, prototipleme ve özel tasarım çözümleri.",
-  openGraph: {
-    type: 'website',
-    locale: 'tr_TR',
-    url: 'https://memonex3d.com',
-    siteName: 'Memonex 3D',
-  }
-};
+// 1. MERKEZİ METADATA YÖNETİMİ
+export async function generateMetadata(): Promise<Metadata> {
+  const { data: s } = await supabase.from("site_settings").select("*").single();
+  const brandName = s?.brand_name || "MEMONEX";
+  const brandSuffix = s?.brand_suffix || "3D";
+  const fullBrand = `${brandName} ${brandSuffix}`;
 
-export default function SiteLayout({ children }: { children: React.ReactNode }) {
+  return {
+    title: {
+      default: fullBrand,
+      template: s?.site_title_template || `%s | ${fullBrand}`,
+    },
+    description: s?.site_description_default || "Yüksek hassasiyetli 3D baskı çözümleri.",
+    metadataBase: new URL(s?.site_url || "https://memonex3d.com"),
+    openGraph: {
+      title: fullBrand,
+      description: s?.site_description_default,
+      url: s?.site_url,
+      siteName: fullBrand,
+      images: [{ url: s?.og_image_default || "/og-image.jpg" }],
+      locale: "tr_TR",
+      type: "website",
+    },
+    robots: {
+      index: s?.allow_ai_bots ?? true,
+      follow: s?.allow_ai_bots ?? true,
+    }
+  };
+}
+
+export default async function SiteLayout({ children }: { children: React.ReactNode }) {
+  const { data: s } = await supabase.from("site_settings").select("*").single();
+
+  const activeGAId = s?.ga_tracking_id || GA_TRACKING_ID;
+  const brandName = s?.brand_name || "MEMONEX";
+  const brandSuffix = s?.brand_suffix || "3D";
+  const fullBrand = `${brandName} ${brandSuffix}`;
+
   const navLinks = [
     { name: "Katalog", href: "/products" },
     { name: "Satış & Mağaza", href: "/satis-ve-magaza" },
@@ -30,14 +55,17 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
   ];
 
   return (
-    <>
-      {/* 1. Google Analytics Kütüphanesini Yükle */}
+    <> 
+      {/* DİKKAT: Burada <html> ve <body> etiketlerini kaldırdık. 
+          Çünkü bu etiketler zaten üst dosya olan app/layout.tsx içinde var.
+          Buraya sadece içerik ve scriptler gelir.
+      */}
+
+      {/* Google Analytics Scriptleri */}
       <Script
         strategy="afterInteractive"
-        src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
+        src={`https://www.googletagmanager.com/gtag/js?id=${activeGAId}`}
       />
-
-      {/* 2. Google Analytics Başlatma Yapılandırması */}
       <Script
         id="gtag-init"
         strategy="afterInteractive"
@@ -46,20 +74,17 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', '${GA_TRACKING_ID}', {
-              page_path: window.location.pathname,
-            });
+            gtag('config', '${activeGAId}');
           `,
         }}
       />
 
-      {/* 3. Sayfa Geçişlerini Takip Eden Bileşen */}
       <Suspense fallback={null}>
-        <GoogleAnalyticsTracker />
+        <GoogleAnalyticsTracker trackingId={activeGAId} />
       </Suspense>
 
       <div className="flex flex-col min-h-screen selection:bg-blue-600 selection:text-white">
-        <Navbar />
+        <Navbar settings={s} />
         
         <main id="main-content" className="flex-grow bg-[#FCFCFD] pt-20">
           {children}
@@ -69,15 +94,20 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
               
+              {/* Marka ve Slogan Alanı */}
               <div className="col-span-1 md:col-span-2 space-y-8">
                 <Link href="/" className="font-black text-2xl tracking-tighter uppercase inline-block">
-                  MEMONEX<span className="text-blue-600 italic">3D</span>
+                  {brandName}<span className="text-blue-600 italic">{brandSuffix}</span>
                 </Link>
                 <p className="text-slate-400 text-sm font-medium max-w-sm leading-relaxed italic">
-                  &quot;Fikirlerinizi milimetrik hassasiyetle somut gerçekliğe dönüştüren yeni nesil üretim merkezi.&quot;
+                  &quot;{s?.brand_slogan || "Fikirlerinizi milimetrik hassasiyetle somut gerçekliğe dönüştüren yeni nesil üretim merkezi."}&quot;
                 </p>
+                {s?.logo_subtext && (
+                  <span className="block text-[10px] text-slate-300 uppercase tracking-widest">{s.logo_subtext}</span>
+                )}
               </div>
               
+              {/* Navigasyon */}
               <nav className="space-y-8" aria-label="Footer Navigasyon">
                 <h4 className="font-black text-[10px] uppercase tracking-[0.4em] text-slate-900">Navigasyon</h4>
                 <ul className="space-y-5">
@@ -94,24 +124,42 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
                 </ul>
               </nav>
 
+              {/* Atölye ve İletişim Bilgileri */}
               <div className="space-y-8">
                 <h4 className="font-black text-[10px] uppercase tracking-[0.4em] text-slate-900">Atölye</h4>
                 <address className="not-italic text-slate-500 text-xs font-bold leading-loose uppercase tracking-tighter">
-                  Isparta, Türkiye<br/>
-                  <a href="mailto:tuncyyldrm@gmail.com" className="text-blue-600 lowercase font-medium italic underline underline-offset-4 hover:text-slate-900 transition-colors">
-                    tuncyyldrm@gmail.com
+                  {s?.workshop_address || "Isparta, Türkiye"}<br/>
+                  <a href={`mailto:${s?.contact_email}`} className="text-blue-600 lowercase font-medium italic underline underline-offset-4 hover:text-slate-900 transition-colors">
+                    {s?.contact_email}
                   </a>
+                  {s?.whatsapp_no && (
+                    <div className="mt-4">
+                      <a 
+                        href={`https://wa.me/${s.whatsapp_no}`} 
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-slate-400 hover:text-green-600 transition-colors flex items-center gap-2"
+                      >
+                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        WA: {s.whatsapp_no}
+                      </a>
+                    </div>
+                  )}
                 </address>
               </div>
             </div>
 
             <div className="pt-10 border-t border-slate-50 flex flex-col md:flex-row justify-between items-center gap-6">
               <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">
-                © 2026 Memonex3D. Gelecek Burada Basılıyor.
+                © {new Date().getFullYear()} {fullBrand}. Gelecek Burada Basılıyor.
               </p>
               <div className="flex gap-8 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                <a href="https://instagram.com/memonex3d" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">Instagram</a>
-                <a href="https://tiktok.com/@memonex3d" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">Tiktok</a>
+                {s?.instagram_url && (
+                  <a href={s.instagram_url} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">Instagram</a>
+                )}
+                {s?.tiktok_url && (
+                  <a href={s.tiktok_url} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">Tiktok</a>
+                )}
               </div>
             </div>
           </div>

@@ -4,22 +4,38 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 
-export default function Navbar() {
+interface NavbarProps {
+  settings: {
+    whatsapp_no?: string;
+    brand_name?: string;
+    brand_suffix?: string;
+    address_city?: string;
+  } | null;
+}
+
+export default function Navbar({ settings }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
 
+  // Veritabanı Değerleri ve Fallback (Yedek) Mekanizması
+  const brand = settings?.brand_name || "MEMONEX";
+  const suffix = settings?.brand_suffix || "3D";
+  const whatsapp = settings?.whatsapp_no || "905312084897";
+  const city = settings?.address_city || "Isparta, Türkiye";
+
+  // Kaydırma (Scroll) Efekti
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Menü açıldığında sayfanın arkada kaymasını tamamen engeller
+  // Mobil Menü Açıkken Arka Planı Kilitleme
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
-      document.body.style.touchAction = "none"; // Mobil kaydırmayı kilitler
+      document.body.style.touchAction = "none";
     } else {
       document.body.style.overflow = "unset";
       document.body.style.touchAction = "auto";
@@ -37,19 +53,21 @@ export default function Navbar() {
   return (
     <header 
       className={`fixed top-0 left-0 right-0 z-[10002] w-full transition-all duration-300 ${
-        scrolled ? "bg-white/90 backdrop-blur-md border-b border-slate-100 shadow-sm" : "bg-white border-b border-transparent"
+        scrolled 
+          ? "bg-white/90 backdrop-blur-md border-b border-slate-100 shadow-sm" 
+          : "bg-white border-b border-transparent"
       }`}
     >
       <nav className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center relative" aria-label="Ana Navigasyon">
         
-        {/* LOGO - Z-Index artırıldı */}
+        {/* LOGO: Marka ve Suffix Veritabanından Geliyor */}
         <Link 
           href="/" 
           className="group flex items-center gap-1 z-[10005]" 
           onClick={() => setIsOpen(false)}
         >
           <span className="font-black text-2xl tracking-tighter uppercase text-slate-900">
-            MEMONEX<span className="text-blue-600 italic group-hover:not-italic transition-all duration-500">3D</span>
+            {brand}<span className="text-blue-600 italic group-hover:not-italic transition-all duration-500">{suffix}</span>
           </span>
         </Link>
 
@@ -67,7 +85,7 @@ export default function Navbar() {
             </Link>
           ))}
           <Link 
-            href="https://wa.me/905312084897" 
+            href={`https://wa.me/${whatsapp}`} 
             target="_blank"
             rel="noopener noreferrer"
             className="bg-slate-900 text-white px-7 py-3 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all hover:scale-105 active:scale-95"
@@ -76,7 +94,7 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* MOBİL BUTON - Menü açıldığında en üstte durur */}
+        {/* MOBİL BUTON (Hamburger) */}
         <button 
           onClick={() => setIsOpen(!isOpen)} 
           className="md:hidden z-[10005] p-2 text-slate-900 focus:outline-none"
@@ -90,13 +108,13 @@ export default function Navbar() {
         </button>
       </nav>
 
-      {/* MOBİL OVERLAY - TAM EKRAN VE TAM OPAK ARKA PLAN */}
+      {/* MOBİL FULL-SCREEN OVERLAY */}
       <div 
         className={`fixed inset-0 h-screen w-full bg-white z-[10003] flex flex-col transition-transform duration-500 ease-in-out md:hidden ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="flex flex-col h-full px-10 pt-16 pb-12 overflow-y-auto">
+        <div className="flex flex-col h-full px-10 pt-24 pb-12 overflow-y-auto">
           <div className="flex flex-col gap-6">
             <span className="text-[10px] font-black tracking-[0.4em] text-blue-600 uppercase opacity-50 mb-4">Navigasyon</span>
             {navLinks.map((link) => (
@@ -116,11 +134,11 @@ export default function Navbar() {
 
           <div className="mt-auto border-t border-slate-100 pt-8 space-y-8">
             <div className="space-y-2">
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">İletişim</p>
-               <p className="text-slate-900 font-bold uppercase">Isparta, Türkiye</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Atölye Konumu</p>
+              <p className="text-slate-900 font-bold uppercase">{city}</p>
             </div>
             <Link 
-              href="https://wa.me/905312084897" 
+              href={`https://wa.me/${whatsapp}`} 
               target="_blank" 
               rel="noopener noreferrer"
               onClick={() => setIsOpen(false)}

@@ -1,9 +1,12 @@
 // lib/gtag.ts
-export const GA_TRACKING_ID = 'G-CW05QPYXS3';
+export const GA_TRACKING_ID = 'G-CW05QPYXS3'; // Yedek (Fallback)
 
-export const pageview = (url: string) => {
+// dynamicId gelirse onu kullan, gelmezse statik olanı kullan
+export const pageview = (url: string, dynamicId?: string) => {
+  const activeId = dynamicId || GA_TRACKING_ID;
+  
   if (typeof window !== 'undefined' && window.gtag) {
-    window.gtag('config', GA_TRACKING_ID, {
+    window.gtag('config', activeId, {
       page_path: url,
     });
   }
@@ -12,7 +15,6 @@ export const pageview = (url: string) => {
 declare global {
   interface Window {
     gtag: (...args: any[]) => void;
-    // Hata veren satırı şununla değiştir:
     dataLayer?: Object[]; 
   }
 }

@@ -3,18 +3,19 @@
 
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
-import { pageview } from '@/lib/gtag'; // Import yolunun doğruluğundan emin ol
+import { pageview } from '@/lib/gtag';
 
-export default function GoogleAnalyticsTracker() {
+export default function GoogleAnalyticsTracker({ trackingId }: { trackingId: string }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   useEffect(() => {
     if (pathname) {
       const url = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
-      pageview(url); // Manuel kod yerine lib fonksiyonunu çağırdık
+      // Veritabanından gelen veya yedek olan ID ile tetikle
+      pageview(url, trackingId); 
     }
-  }, [pathname, searchParams]);
+  }, [pathname, searchParams, trackingId]);
 
   return null;
 }

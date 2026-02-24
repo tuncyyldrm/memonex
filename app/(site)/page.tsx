@@ -1,43 +1,38 @@
-// app/(site)/page.tsx
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import Image from "next/image";
 import { stripHtml, formatDate } from "@/lib/utils";
 import { Metadata } from "next";
 
-// 1. STATİK METADATA: Ana sayfa için SEO başlıkları
-export const metadata: Metadata = {
-  title: "Memonex3D | Isparta 3D Baskı ve Endüstriyel Tasarım Merkezi",
-  description: "Isparta'da yüksek hassasiyetli 3D baskı, hızlı prototipleme ve özel endüstriyel tasarım çözümleri. Fikirlerinizi milimetrik hassasiyetle somut gerçekliğe dönüştürüyoruz.",
-  alternates: {
-    canonical: "https://memonex3d.com",
-  },
-  openGraph: {
-    title: "Memonex3D - Geleceği Şekillendiren Üretim",
-    description: "Endüstriyel standartlarda 3D baskı ve prototipleme hizmetleri.",
-    url: "https://memonex3d.com",
-    siteName: "Memonex3D",
-    images: [
-      {
-        url: "/og-default.jpg", // public klasöründeki varsayılan görsel
-        width: 1200,
-        height: 630,
-        alt: "Memonex3D 3D Baskı Atölyesi",
-      },
-    ],
-    locale: "tr_TR",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Memonex3D | 3D Baskı Çözümleri",
-    description: "Hayal ettiğiniz her şeyi 3D üretim teknolojileriyle hayata geçiriyoruz.",
-    images: ["/og-default.jpg"],
-  },
-};
+// 1. DİNAMİK METADATA GENERATOR
+// Layout'taki "template" yapısıyla çakışmaması için optimize edildi.
+export async function generateMetadata(): Promise<Metadata> {
+  const { data: s } = await supabase.from("site_settings").select("*").single();
+  const brand = `${s?.brand_name || "Memonex"} ${s?.brand_suffix || "3D"}`;
+
+  return {
+    // Sadece marka ismini döndürüyoruz, Layout bunu template içine yerleştirecek.
+    title: brand, 
+    description: s?.site_description_default || "Yüksek hassasiyetli 3D baskı çözümleri.",
+    alternates: { canonical: s?.site_url || "https://memonex3d.com" },
+    openGraph: {
+      title: brand,
+      description: s?.site_description_default,
+      url: s?.site_url,
+      siteName: brand,
+      images: [{ url: s?.og_image_default || "/og-image.jpg" }],
+      locale: "tr_TR",
+      type: "website",
+    },
+    robots: {
+      index: s?.allow_ai_bots ?? true,
+      follow: s?.allow_ai_bots ?? true,
+    }
+  };
+}
 
 async function getData() {
-  const [blogRes, productRes] = await Promise.all([
+  const [blogRes, productRes, settingsRes] = await Promise.all([
     supabase.from("blog_posts")
       .select("id, title, slug, content, excerpt, featured_image, created_at")
       .eq("published", true)
@@ -46,49 +41,52 @@ async function getData() {
     supabase.from("products")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(6)
+      .limit(6),
+    supabase.from("site_settings").select("*").single()
   ]);
-  return { posts: blogRes.data || [], products: productRes.data || [] };
+  
+  return { 
+    posts: blogRes.data || [], 
+    products: productRes.data || [],
+    s: settingsRes.data 
+  };
 }
 
 export default async function Home() {
-  const { posts, products } = await getData();
+  const { posts, products, s } = await getData();
 
-  // 2. SCHEMA.ORG: Google'ın işletmeyi tanıması için (LocalBusiness)
+  const brandName = s?.brand_name || "MEMONEX";
+  const brandSuffix = s?.brand_suffix || "3D";
+
+  // 2. SCHEMA.ORG (Yerel İşletme Verisi)
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
-    "name": "Memonex3D",
-    "image": "https://memonex3d.com/og-default.jpg",
-    "@id": "https://memonex3d.com",
-    "url": "https://memonex3d.com",
-    "telephone": "+905312084897",
+    "name": `${brandName} ${brandSuffix}`,
+    "image": s?.og_image_default || "/og-image.jpg",
+    "url": s?.site_url,
+    "telephone": s?.whatsapp_no,
+    "email": s?.contact_email,
     "address": {
       "@type": "PostalAddress",
-      "streetAddress": "Merkez", // Varsa açık adresini buraya ekle
+      "streetAddress": s?.workshop_address || "Isparta, Türkiye",
       "addressLocality": "Isparta",
       "addressCountry": "TR"
     },
     "geo": {
       "@type": "GeoCoordinates",
-      "latitude": 37.7648, // Isparta yaklaşık koordinatları (isteğe bağlı)
-      "longitude": 30.5566
-    },
-    "openingHoursSpecification": {
-      "@type": "OpeningHoursSpecification",
-      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-      "opens": "09:00",
-      "closes": "19:00"
+      "latitude": s?.geo_latitude,
+      "longitude": s?.geo_longitude
     },
     "sameAs": [
-      "https://www.instagram.com/memonex3d", // Varsa sosyal medya linklerini ekle
-      "https://wa.me/905312084897"
-    ]
+      s?.instagram_url,
+      s?.tiktok_url,
+    ].filter(Boolean)
   };
 
   return (
     <div className="bg-white min-h-screen font-sans selection:bg-blue-600 selection:text-white">
-      {/* Schema Script */}
+      {/* Google için Yapılandırılmış Veri */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -104,25 +102,31 @@ export default async function Home() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
             </span>
-            <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">Yeni Nesil Atölye</span>
+            <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">
+              {s?.logo_subtext || "Yeni Nesil Atölye"}
+            </span>
           </div>
 
-          <h1 className="text-6xl md:text-[9.5rem] font-black text-slate-900 tracking-tighter mb-10 leading-[0.8] drop-shadow-sm">
-            <span className="sr-only">Isparta 3D Baskı ve Prototipleme: </span>
-            MEMONEX<span className="text-blue-600 italic">3D</span>
+          <h1 className="text-6xl md:text-[9.5rem] font-black text-slate-900 tracking-tighter mb-10 leading-[0.8] drop-shadow-sm uppercase">
+            {s?.hero_title_upper || brandName}
+            <span className="text-blue-600 italic block md:inline ml-0 md:ml-4">{s?.hero_title_lower || brandSuffix}</span>
           </h1>
 
           <p className="text-xl md:text-2xl text-slate-500 font-medium leading-relaxed mb-14 max-w-2xl mx-auto italic opacity-90">
-            "Fikirlerinizi milimetrik hassasiyetle somut gerçekliğe dönüştüren yüksek teknoloji üretim merkezi."
+            &quot;{s?.brand_slogan || "Fikirlerinizi milimetrik hassasiyetle somut gerçekliğe dönüştüren yüksek teknoloji üretim merkezi."}&quot;
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
             <Link href="/products" className="group bg-slate-900 text-white px-12 py-6 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl hover:shadow-blue-200 active:scale-95 flex items-center gap-3">
               Kataloğu Keşfet <span className="group-hover:translate-x-1 transition-transform">→</span>
             </Link>
-            <Link href="https://wa.me/905312084897" target="_blank" className="bg-white text-slate-900 border-2 border-slate-100 px-12 py-6 rounded-2xl font-black text-xs uppercase tracking-widest hover:border-blue-600 transition-all active:scale-95">
+            <a 
+              href={`https://wa.me/${s?.whatsapp_no}?text=${encodeURIComponent(s?.wa_default_msg || 'Merhaba, bir projem var.')}`} 
+              target="_blank" 
+              className="bg-white text-slate-900 border-2 border-slate-100 px-12 py-6 rounded-2xl font-black text-xs uppercase tracking-widest hover:border-blue-600 transition-all active:scale-95"
+            >
               Hızlı Teklif
-            </Link>
+            </a>
           </div>
         </div>
       </section>
@@ -134,7 +138,9 @@ export default async function Home() {
             <h2 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter uppercase leading-none italic">
               Öne Çıkan <span className="text-blue-600">İşler</span>
             </h2>
-            <p className="text-slate-500 mt-6 font-medium text-lg leading-relaxed">Endüstriyel parçalardan sanatsal modellere kadar geniş üretim yelpazemiz.</p>
+            <p className="text-slate-500 mt-6 font-medium text-lg leading-relaxed">
+              Endüstriyel parçalardan sanatsal modellere kadar geniş üretim yelpazemiz.
+            </p>
           </div>
           <Link href="/products" className="text-slate-400 font-black text-[10px] uppercase tracking-[0.4em] hover:text-blue-600 transition-all flex items-center gap-4 group">
             TÜMÜNÜ GÖR <span className="w-12 h-[2px] bg-slate-200 group-hover:bg-blue-600 group-hover:w-20 transition-all"></span>
@@ -142,22 +148,22 @@ export default async function Home() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-24">
-          {products.map((product) => (
+          {products.length > 0 ? products.map((product) => (
             <Link key={product.id} href={`/products/${product.slug}`} className="group block">
-              <div className="aspect-[1/1] bg-slate-100 rounded-[3rem] mb-8 overflow-hidden relative border border-slate-100 transition-all duration-700 group-hover:shadow-[0_40px_80px_-15px_rgba(37,99,235,0.15)] group-hover:-translate-y-3">
+              <div className="aspect-square bg-slate-100 rounded-[3rem] mb-8 overflow-hidden relative border border-slate-100 transition-all duration-700 group-hover:shadow-[0_40px_80px_-15px_rgba(37,99,235,0.15)] group-hover:-translate-y-3">
                 {product.image ? (
                   <Image
                     src={product.image}
-                    alt={`${product.name} - Endüstriyel 3D Baskı ve Üretim Isparta`}
+                    alt={product.name}
                     fill
-                    priority={false}
                     className="object-cover transition-transform duration-[1.5s] group-hover:scale-110"
                     sizes="(max-width: 768px) 100vw, 33vw"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center font-black text-slate-200 text-8xl italic">M3D</div>
+                  <div className="w-full h-full flex items-center justify-center font-black text-slate-200 text-8xl italic uppercase">
+                    {brandName[0]}{brandSuffix[0]}
+                  </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </div>
 
               <div className="px-2">
@@ -165,11 +171,14 @@ export default async function Home() {
                   <h3 className="text-2xl font-black text-slate-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight leading-none max-w-[70%]">
                     {product.name}
                   </h3>
-                  <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-widest">3D Print</span>
+                  <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-widest">
+                    {product.category || '3D Print'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between pt-6 border-t border-slate-100">
                   <p className="text-slate-900 font-black text-2xl tracking-tighter">
-                    {new Intl.NumberFormat('tr-TR').format(product.price)} <span className="text-blue-600 text-sm italic ml-1">₺</span>
+                    {new Intl.NumberFormat('tr-TR').format(product.price)} 
+                    <span className="text-blue-600 text-sm italic ml-1">{s?.price_currency || '₺'}</span>
                   </p>
                   <div className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center group-hover:bg-slate-900 group-hover:border-slate-900 transition-all group-hover:text-white">
                     <span className="text-xl">↗</span>
@@ -177,61 +186,81 @@ export default async function Home() {
                 </div>
               </div>
             </Link>
-          ))}
+          )) : (
+            <div className="col-span-full py-20 text-center text-slate-400 font-bold uppercase tracking-widest italic">
+                {s?.catalog_empty_msg || "Henüz ürün eklenmedi."}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* --- BLOG ÖNİZLEME (Teknik Günlük) --- */}
+      {/* --- BLOG ÖNİZLEME --- */}
       <section id="blog" className="py-32 px-6 bg-slate-900 text-white rounded-[3rem] md:rounded-[5rem] mx-4 md:mx-8 my-12 overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[120px] -z-0 pointer-events-none" />
-
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-24 gap-10">
             <div>
-              <h2 className="text-6xl md:text-8xl font-black tracking-tighter uppercase italic leading-[0.8] mb-6">TEKNİK<br /><span className="text-blue-500">GÜNLÜK</span></h2>
-              <p className="text-slate-400 font-medium max-w-sm text-lg italic opacity-80">Malzeme bilimi ve 3D teknolojilerine dair derinlemesine incelemeler.</p>
+              <h2 className="text-6xl md:text-8xl font-black tracking-tighter uppercase italic leading-[0.8] mb-6">
+                TEKNİK<br /><span className="text-blue-500">GÜNLÜK</span>
+              </h2>
+              <p className="text-slate-400 font-medium max-w-sm text-lg italic opacity-80">
+                Malzeme bilimi ve 3D teknolojilerine dair derinlemesine incelemeler.
+              </p>
             </div>
-            <Link href="/blog" className="bg-white/5 border border-white/10 hover:bg-white hover:text-slate-900 px-14 py-6 rounded-[2rem] text-[11px] font-black uppercase tracking-[0.3em] transition-all shadow-2xl shadow-black/50">BLOGU KEŞFET</Link>
+            <Link href="/blog" className="bg-white/5 border border-white/10 hover:bg-white hover:text-slate-900 px-14 py-6 rounded-[2rem] text-[11px] font-black uppercase tracking-[0.3em] transition-all">
+              BLOGU KEŞFET
+            </Link>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-            {posts.map((post) => (
-              <Link key={post.id} href={`/blog/${post.slug}`} className="group flex flex-col h-full bg-white/[0.03] rounded-[3.5rem] p-6 border border-white/[0.05] hover:border-blue-500/30 transition-all duration-700">
-                <div className="aspect-[4/3] w-full rounded-[2.5rem] overflow-hidden mb-10 relative shadow-2xl">
+            {posts.length > 0 ? posts.map((post) => (
+              <Link key={post.id} href={`/blog/${post.slug}`} className="group flex flex-col h-full bg-white/[0.03] rounded-[3.5rem] p-6 border border-white/[0.05] hover:border-blue-500/30 transition-all">
+                <div className="aspect-[4/3] w-full rounded-[2.5rem] overflow-hidden mb-10 relative">
                   <Image
                     src={post.featured_image || "/placeholder-blog.jpg"}
-                    alt={`${post.title} - Memonex3D Blog`}
+                    alt={post.title}
                     fill
-                    className="object-cover grayscale brightness-75 group-hover:grayscale-0 group-hover:brightness-100 transition-all duration-1000 group-hover:scale-105"
+                    className="object-cover grayscale group-hover:grayscale-0 transition-all duration-1000"
                   />
                 </div>
                 <div className="px-2 flex-grow flex flex-col">
-                  <span className="text-blue-500 text-[10px] font-black tracking-[0.4em] uppercase mb-6 block">{formatDate(post.created_at)}</span>
-                  <h3 className="text-2xl font-bold group-hover:text-blue-400 transition-colors mb-6 leading-tight uppercase tracking-tight">{post.title}</h3>
-                  <p className="text-slate-400 text-sm line-clamp-3 leading-relaxed font-medium italic opacity-60 mb-8">
-                    {stripHtml(post.excerpt || post.content).slice(0, 85)}
-                    {(post.excerpt || post.content).length > 85 ? '...' : ''}
+                  <span className="text-blue-500 text-[10px] font-black tracking-[0.4em] uppercase mb-6 block">
+                    {formatDate(post.created_at)}
+                  </span>
+                  <h3 className="text-2xl font-bold mb-6 leading-tight uppercase">{post.title}</h3>
+                  <p className="text-slate-400 text-sm line-clamp-3 mb-8 italic opacity-60">
+                    {stripHtml(post.excerpt || post.content).slice(0, 85)}...
                   </p>
-                  <div className="mt-auto pt-6 border-t border-white/10 text-xs font-black tracking-widest text-white/40 group-hover:text-blue-500 transition-colors uppercase">
-                    İncele +
-                  </div>
                 </div>
               </Link>
-            ))}
+            )) : (
+                <div className="col-span-full py-10 text-slate-500 font-bold uppercase tracking-[0.2em] italic">
+                   {s?.blog_empty_msg || "Yakında burada teknik yazılar paylaşacağız."}
+                </div>
+            )}
           </div>
         </div>
       </section>
 
       {/* --- CTA SECTION --- */}
       <section className="py-44 text-center bg-white px-6">
-        <div className="max-w-4xl mx-auto bg-slate-50 py-28 px-8 rounded-[6rem] border border-slate-100 relative group">
-          <div className="absolute top-0 right-0 w-32 h-32 border-r-8 border-t-8 border-blue-600/5 rounded-tr-[6rem] transition-all group-hover:border-blue-600/20" />
-          <h2 className="text-6xl md:text-8xl font-black mb-14 tracking-tighter uppercase leading-[0.85]">
-            HAYAL ET <br /> <span className="text-blue-600 italic">ÜRETELİM</span>.
+        <div className="max-w-4xl mx-auto bg-slate-50 py-28 px-8 rounded-[6rem] border border-slate-100 relative group overflow-hidden z-0">
+          <div className="absolute inset-0 bg-blue-600 translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-in-out -z-10" />
+          
+          <h2 className="text-6xl md:text-8xl font-black mb-14 tracking-tighter uppercase leading-[0.85] text-slate-900 group-hover:text-white transition-colors duration-500 relative">
+            HAYAL ET <br /> 
+            <span className="text-blue-600 italic group-hover:text-white transition-colors duration-500">
+              ÜRETELİM
+            </span>.
           </h2>
-          <Link href="https://wa.me/905312084897" target="_blank" className="inline-block bg-slate-900 text-white px-16 py-8 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] hover:bg-blue-600 hover:scale-105 transition-all shadow-2xl shadow-blue-900/10">
+
+          <a 
+            href={`https://wa.me/${s?.whatsapp_no}`} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="relative inline-block bg-slate-900 text-white px-16 py-8 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] hover:bg-white hover:text-blue-600 transition-all shadow-2xl active:scale-95"
+          >
             PROJENİ BAŞLAT
-          </Link>
+          </a>
         </div>
       </section>
     </div>
