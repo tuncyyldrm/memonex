@@ -14,26 +14,54 @@ export async function generateMetadata(): Promise<Metadata> {
   const brandName = s?.brand_name || "MEMONEX";
   const brandSuffix = s?.brand_suffix || "3D";
   const fullBrand = `${brandName} ${brandSuffix}`;
+  const siteUrl = s?.site_url || "https://memonex3d.com";
+  const description = s?.site_description_default || "Yüksek hassasiyetli 3D baskı çözümleri.";
 
   return {
     title: {
       default: fullBrand,
       template: s?.site_title_template || `%s | ${fullBrand}`,
     },
-    description: s?.site_description_default || "Yüksek hassasiyetli 3D baskı çözümleri.",
-    metadataBase: new URL(s?.site_url || "https://memonex3d.com"),
+    description: description,
+    metadataBase: new URL(siteUrl),
+    alternates: {
+      canonical: "/", // KRİTİK 1: siteUrl yerine "/" yazmak daha güvenlidir.
+    },
     openGraph: {
       title: fullBrand,
-      description: s?.site_description_default,
-      url: s?.site_url,
+      description: description,
+      url: "./",
       siteName: fullBrand,
-      images: [{ url: s?.og_image_default || "/og-image.jpg" }],
+      images: [{ 
+        url: s?.og_image_default || "/og-default.jpg",
+        width: 1200,
+        height: 630,
+        alt: fullBrand 
+      }],
       locale: "tr_TR",
       type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: fullBrand,
+      description: description,
+      images: [s?.og_image_default || "/og-default.jpg"],
     },
     robots: {
       index: s?.allow_ai_bots ?? true,
       follow: s?.allow_ai_bots ?? true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-image-preview': 'large',
+      },
+    },
+    other: {
+      "geo.position": `${s?.geo_latitude};${s?.geo_longitude}`,
+      "ICBM": `${s?.geo_latitude}, ${s?.geo_longitude}`,
+      "geo.placename": "Isparta", // KRİTİK 2: Split hatasını önlemek için sabitledik.
+      "geo.region": "TR-32", // KRİTİK 3: Isparta için tam bölge kodu.
+      "theme-color": s?.accent_color_hex || "#2563eb",
     }
   };
 }
