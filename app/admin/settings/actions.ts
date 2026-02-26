@@ -6,38 +6,49 @@ import { revalidatePath } from "next/cache";
 export async function updateSettings(formData: FormData) {
   const rawData = Object.fromEntries(formData.entries());
   
-  // Veritabanı şemasına göre verileri formatlıyoruz
+  // 1. Veri Dönüştürme ve Formatlama
   const formattedData: any = {
     ...rawData,
     
-    // Sayısal Değerler (Integer)
-    shipping_days_min: rawData.shipping_days_min ? parseInt(rawData.shipping_days_min as string) : 0,
-    shipping_days_max: rawData.shipping_days_max ? parseInt(rawData.shipping_days_max as string) : 0,
-    handling_time_max: rawData.handling_time_max ? parseInt(rawData.handling_time_max as string) : 0,
+    // Sayısal Değerleri zorunlu olarak Integer'a çeviriyoruz
+    shipping_days_min: Number(rawData.shipping_days_min) || 0,
+    shipping_days_max: Number(rawData.shipping_days_max) || 0,
+    handling_time_max: Number(rawData.handling_time_max) || 0,
     
-    // Koordinatlar (Şemada text olduğu için string olarak gönderiyoruz)
-    geo_latitude: rawData.geo_latitude?.toString() || null,
-    geo_longitude: rawData.geo_longitude?.toString() || null,
+    // Checkbox Mantığı (SettingsForm'dan gelen "true"/"false" string kontrolü)
+    allow_ai_bots: rawData.allow_ai_bots === "true",
     
-    // Boolean (Checkbox)
-    allow_ai_bots: rawData.allow_ai_bots === "on",
-    
-    // Tarih ve Zaman
+    // Boş stringleri veritabanında NULL olarak saklamak SEO ve Schema sağlığı için kritiktir
     price_valid_until: rawData.price_valid_until || null,
+    ga_tracking_id: rawData.ga_tracking_id || null,
+    og_image_default: rawData.og_image_default || null,
+    
+    // Manuel update zaman damgası
     updated_at: new Date().toISOString(),
   };
+
+  // 2. İlk kaydı güncelle (Genelde site_settings tablosunda tek satır olur)
+  // Eğer tablonuzda ID farklıysa, önce ID'yi çekip sonra update etmek en güvenli yoldur.
+  // Burada genel bir yaklaşım için ilk kaydı hedefliyoruz.
+  const { data: firstRow } = await supabase.from("site_settings").select("id").limit(1).single();
+
+  if (!firstRow) {
+    return { success: false, message: "Ayar satırı bulunamadı. Lütfen veritabanını kontrol edin." };
+  }
 
   const { error } = await supabase
     .from("site_settings")
     .update(formattedData)
-    .eq("id", "00000000-0000-0000-0000-000000000000");
+    .eq("id", firstRow.id);
 
   if (error) {
-    console.error("Memonex SQL Error:", error.message);
+    console.error("Supabase Error:", error.message);
     return { success: false, message: error.message };
   }
 
-  // Tüm siteyi yeni ayarlarla yenile
+  // 3. Önbelleği Temizle
+  // "layout" seçeneği tüm sayfaların meta verilerini ve ayarlarını anında günceller.
   revalidatePath("/", "layout");
+  
   return { success: true };
 }
