@@ -3,18 +3,6 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
-
-  // --- 1. SONSZ DÖNGÜYÜ ENGELLEYEN PARAMETRE TEMİZLEME ---
-  if (searchParams.has('m') && searchParams.get('m') === '1') {
-    const url = new URL(request.url); // Tam URL objesi oluştur
-    url.searchParams.delete('m');    // Sadece 'm' parametresini sil
-    
-    // Önemli: Eğer yeni URL eskisiyle aynıysa (döngü oluşmasın) devam et
-    if (url.toString() !== request.url) {
-      return NextResponse.redirect(url, 301);
-    }
-  }
-
   // --- 2. SUPABASE AUTH VE RESPONSE HAZIRLIĞI ---
   let response = NextResponse.next({
     request: {
