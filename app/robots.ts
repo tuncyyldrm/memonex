@@ -18,7 +18,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
         "/dashboard",  // Kullanıcı paneli
         "/api/",       // Backend endpointleri
         "/private/",   // Gizli dosyalar
-        "/*?*",        // Filtreleme/Arama parametreleri (SEO dostu)
+        // "/*?*",        // Filtreleme/Arama parametreleri (SEO dostu)
       ],
     }
   ];
