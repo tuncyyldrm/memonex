@@ -2,6 +2,16 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
+  const { pathname, searchParams } = request.nextUrl;
+
+  // --- 1. URL PARAMETRE TEMİZLEME (Blogger ?m=1 Yönlendirmesi) ---
+  if (searchParams.get('m') === '1') {
+    const url = request.nextUrl.clone();
+    url.searchParams.delete('m'); // 'm' parametresini kaldır
+    return NextResponse.redirect(url, 301); // Kalıcı yönlendirme (SEO dostu)
+  }
+
+  // --- 2. SUPABASE AUTH VE RESPONSE HAZIRLIĞI ---
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -19,18 +29,14 @@ export async function middleware(request: NextRequest) {
         set(name: string, value: string, options: CookieOptions) {
           request.cookies.set({ name, value, ...options });
           response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
+            request: { headers: request.headers },
           });
           response.cookies.set({ name, value, ...options });
         },
         remove(name: string, options: CookieOptions) {
           request.cookies.set({ name, value: '', ...options });
           response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
+            request: { headers: request.headers },
           });
           response.cookies.set({ name, value: '', ...options });
         },
@@ -40,9 +46,9 @@ export async function middleware(request: NextRequest) {
 
   const { data: { session } } = await supabase.auth.getSession();
 
-  // Koruma mantığı
-  const isAuthPage = request.nextUrl.pathname === '/admin/auth';
-  const isAdminPage = request.nextUrl.pathname.startsWith('/admin');
+  // --- 3. ADMIN PANEL KORUMA MANTIĞI ---
+  const isAuthPage = pathname === '/admin/auth';
+  const isAdminPage = pathname.startsWith('/admin');
 
   if (!session && isAdminPage && !isAuthPage) {
     return NextResponse.redirect(new URL('/admin/auth', request.url));
@@ -55,6 +61,11 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
+// --- 4. KRİTİK DEĞİŞİKLİK: MATCHER ---
 export const config = {
-  matcher: ['/admin/:path*'],
+  /*
+   * 1. Tüm sayfa yollarını yakala (/_next/ veya /api/ gibi statik dosyalar hariç)
+   * 2. Parametre temizleme tüm sitede çalışmalı, Auth sadece /admin'de.
+   */
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };
