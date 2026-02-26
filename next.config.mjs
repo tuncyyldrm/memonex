@@ -3,7 +3,8 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: '/',
+        // Tüm alt sayfalarda (?m=1) gelirse yakala
+        source: '/:path*', 
         has: [
           {
             type: 'query',
@@ -12,7 +13,7 @@ const nextConfig = {
           },
         ],
         permanent: true,
-        destination: '/', // Parametresiz ana sayfaya atar
+        destination: '/:path*', // Parametreyi otomatik olarak kırpar
       },
     ];
   },

@@ -4,11 +4,15 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
 
-  // --- 1. URL PARAMETRE TEMİZLEME (Blogger ?m=1 Yönlendirmesi) ---
-  if (searchParams.get('m') === '1') {
-    const url = request.nextUrl.clone();
-    url.searchParams.delete('m'); // 'm' parametresini kaldır
-    return NextResponse.redirect(url, 301); // Kalıcı yönlendirme (SEO dostu)
+  // --- 1. SONSZ DÖNGÜYÜ ENGELLEYEN PARAMETRE TEMİZLEME ---
+  if (searchParams.has('m') && searchParams.get('m') === '1') {
+    const url = new URL(request.url); // Tam URL objesi oluştur
+    url.searchParams.delete('m');    // Sadece 'm' parametresini sil
+    
+    // Önemli: Eğer yeni URL eskisiyle aynıysa (döngü oluşmasın) devam et
+    if (url.toString() !== request.url) {
+      return NextResponse.redirect(url, 301);
+    }
   }
 
   // --- 2. SUPABASE AUTH VE RESPONSE HAZIRLIĞI ---
@@ -61,11 +65,7 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
-// --- 4. KRİTİK DEĞİŞİKLİK: MATCHER ---
 export const config = {
-  /*
-   * 1. Tüm sayfa yollarını yakala (/_next/ veya /api/ gibi statik dosyalar hariç)
-   * 2. Parametre temizleme tüm sitede çalışmalı, Auth sadece /admin'de.
-   */
+  // Statik dosyaları dışarıda tutan güvenli matcher
   matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };
