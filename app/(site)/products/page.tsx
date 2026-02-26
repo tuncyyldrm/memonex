@@ -29,7 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: `Ürün Kataloğu - ${brand}`,
       description: "Yüksek hassasiyetli 3D baskı çözümlerimizi inceleyin.",
       url: `${s?.site_url}/products`,
-      images: [{ url: s?.og_image_default || "/og-products.jpg" }],
+      images: [{ url: s?.og_image_products || s?.og_image_default || "/og-products.jpg" }],
     },
   };
 }
