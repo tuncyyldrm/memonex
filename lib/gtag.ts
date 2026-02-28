@@ -2,10 +2,9 @@
 
 export const GA_TRACKING_ID = 'G-CW05QPYXS3';
 
-// TypeScript'e window objesi içinde bu özelliklerin olduğunu öğretiyoruz
 declare global {
   interface Window {
-    gtag: (command: string, id: string, config?: any) => void;
+    gtag: (...args: any[]) => void; // Daha esnek bir tanım
     dataLayer: any[];
   }
 }
@@ -14,20 +13,16 @@ export const pageview = (url: string, dynamicId?: string) => {
   const activeId = dynamicId || GA_TRACKING_ID;
   
   if (typeof window !== 'undefined') {
-    // Eğer gtag fonksiyonu yüklendiyse doğrudan çağır
     if (typeof window.gtag === 'function') {
       window.gtag('config', activeId, {
         page_path: url,
       });
-    } 
-    // Gtag henüz yoksa (özellikle yavaş mobil bağlantılarda) veriyi kuyruğa at v3
-    else {
+    } else {
+      // gtag henüz hazır değilse kuyruğa standart GA4 formatında ekle
       window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push({
-        event: 'pageview',
-        page_path: url,
-        send_to: activeId
-      });
+      // 'js' ve 'config' emirlerini push ederken dizi formatı (arguments) kullanılır
+      window.dataLayer.push(['js', new Date()]);
+      window.dataLayer.push(['config', activeId, { page_path: url }]);
     }
   }
 };
