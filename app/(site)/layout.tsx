@@ -83,27 +83,23 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
 
   return (
     <>
-      {/* DİKKAT: Burada <html> ve <body> etiketlerini kaldırdık. 
-          Çünkü bu etiketler zaten üst dosya olan app/layout.tsx içinde var.
-          Buraya sadece içerik ve scriptler gelir.
-      */}
-
-{/* Google Analytics Ana Script - Stratejiyi 'afterInteractive' yerine varsayılan bırakalım */}
-<Script
-  src={`https://www.googletagmanager.com/gtag/js?id=${activeGAId}`}
-  strategy="afterInteractive" // Eğer mobilde hala sorun varsa bu satırı tamamen silip dene
-/>
-<Script
-  id="gtag-init"
-  strategy="afterInteractive" 
-  dangerouslySetInnerHTML={{
-    __html: `
+      {/* Google Analytics Ana Script */}
+      <Script
+        src={`https://www.googletagmanager.com/gtag/js?id=${activeGAId}`}
+        strategy="afterInteractive" // Mobilde sorun devam ederse bu satırı tamamen silebilirsiniz
+      />
+      <Script
+        id="gtag-init"
+        strategy="afterInteractive"
+        dangerouslySetInnerHTML={{
+          __html: `
       window.dataLayer = window.dataLayer || [];
-      function gtag(){window.dataLayer.push(arguments);} // window. eklemek mobilde daha güvenlidir
+      function gtag(){window.dataLayer.push(arguments);}
       gtag('js', new Date());
+      // Config komutunu burada çalıştırmıyoruz, Tracker bileşeni hallediyor.
     `,
-  }}
-/>
+        }}
+      />
       {/* Bu bileşen zaten config işini yapıyor, o yüzden yukarıda tekrar etmeye gerek yok */}
       <Suspense fallback={null}>
         <GoogleAnalyticsTracker trackingId={activeGAId} />
