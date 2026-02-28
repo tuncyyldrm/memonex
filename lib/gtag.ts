@@ -11,12 +11,20 @@ declare global {
 export const pageview = (url: string, dynamicId?: string) => {
   const activeId = dynamicId || GA_TRACKING_ID;
   if (typeof window !== 'undefined') {
-    // gtag tanımlıysa kullan, değilse kuyruğa (dataLayer) ekle
-    const gtagFn = window.gtag || function() { (window.dataLayer = window.dataLayer || []).push(arguments); };
-    
-    gtagFn('config', activeId, {
-      page_path: url,
-      debug_mode: true, // Paneli anlık izlemek için
-    });
+    // window.gtag varsa onu kullan, yoksa dataLayer'a push et
+    if (typeof window.gtag === 'function') {
+      window.gtag('config', activeId, {
+        page_path: url,
+        debug_mode: true,
+      });
+} else {
+      // Kuyruğa itme (Pushing to queue)
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push('js', new Date()); // Bazı tarayıcılar için başlatma sinyali
+      window.dataLayer.push('config', activeId, { 
+        page_path: url, 
+        debug_mode: true 
+      });
+    }
   }
 };
