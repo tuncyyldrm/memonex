@@ -20,7 +20,7 @@ export const pageview = (url: string, dynamicId?: string) => {
         page_path: url,
       });
     } 
-    // Gtag henüz yoksa (özellikle yavaş mobil bağlantılarda) veriyi kuyruğa at v1
+    // Gtag henüz yoksa (özellikle yavaş mobil bağlantılarda) veriyi kuyruğa at v2
     else {
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({
