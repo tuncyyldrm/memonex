@@ -2,6 +2,7 @@
 
 export const GA_TRACKING_ID = 'G-CW05QPYXS3';
 
+// TypeScript'in window objesini tanıması için global tanım
 declare global {
   interface Window {
     gtag: (...args: any[]) => void;
@@ -13,22 +14,19 @@ export const pageview = (url: string, dynamicId?: string) => {
   const activeId = dynamicId || GA_TRACKING_ID;
   
   if (typeof window !== 'undefined') {
+    // Eğer gtag kütüphanesi hazırsa doğrudan gönder
     if (typeof window.gtag === 'function') {
       window.gtag('config', activeId, {
         page_path: url,
-        // Mobilde izlemeyi zorlamak için debug modunu açabilirsin
-        debug_mode: true 
+        debug_mode: true, // Mobilde anlık izlemek için aktif
       });
     } else {
+      // Kütüphane henüz yüklenmemişse (Mobilde yavaş açılış) dataLayer kuyruğuna at
       window.dataLayer = window.dataLayer || [];
-      // KRİTİK DÜZELTME: push içine doğrudan dizi değil, 'arguments' benzeri yapı gönderilmelidir
-      // Bazı tarayıcılar ['config', ...] yapısını anlamayabilir, gtag fonksiyonunun yaptığı işi simüle edelim:
-      function gtagPush() { window.dataLayer.push(arguments); }
-      
-      // @ts-ignore
-      gtagPush('js', new Date());
-      // @ts-ignore
-      gtagPush('config', activeId, { page_path: url });
+      window.dataLayer.push(['config', activeId, { 
+        page_path: url,
+        debug_mode: true 
+      }]);
     }
   }
 };

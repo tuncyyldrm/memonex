@@ -83,28 +83,29 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
 
   return (
     <>
-      {/* Google Analytics Ana Script */}
-      <Script
-        src={`https://www.googletagmanager.com/gtag/js?id=${activeGAId}`}
-        strategy="afterInteractive" // Mobilde sorun devam ederse bu satırı tamamen silebilirsiniz
-      />
-      <Script
-        id="gtag-init"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{
-          __html: `
+// SiteLayout içindeki script bloğunu bu şekilde güncelle
+<Script
+  src={`https://www.googletagmanager.com/gtag/js?id=${activeGAId}`}
+  // strategy="afterInteractive" satırını siliyoruz, varsayılan kalsın
+/>
+<Script
+  id="gtag-init"
+  dangerouslySetInnerHTML={{
+    __html: `
       window.dataLayer = window.dataLayer || [];
       function gtag(){window.dataLayer.push(arguments);}
       gtag('js', new Date());
-      // Config komutunu burada çalıştırmıyoruz, Tracker bileşeni hallediyor.
+      // Mobilde ilk yüklemeyi garantilemek için buraya config ekleyebiliriz
+      gtag('config', '${activeGAId}', { 
+        page_path: window.location.pathname,
+        debug_mode: true 
+      });
     `,
-        }}
-      />
-      {/* Bu bileşen zaten config işini yapıyor, o yüzden yukarıda tekrar etmeye gerek yok */}
-      <Suspense fallback={null}>
-        <GoogleAnalyticsTracker trackingId={activeGAId} />
-      </Suspense>
-
+  }}
+/>
+<Suspense fallback={null}>
+  <GoogleAnalyticsTracker trackingId={activeGAId} />
+</Suspense>
       <div className="flex flex-col min-h-screen selection:bg-blue-600 selection:text-white">
         <Navbar settings={s} />
 
