@@ -83,29 +83,29 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
 
   return (
     <>
-// SiteLayout içindeki script bloğunu bu şekilde güncelle
-<Script
-  src={`https://www.googletagmanager.com/gtag/js?id=${activeGAId}`}
-  // strategy="afterInteractive" satırını siliyoruz, varsayılan kalsın
-/>
-<Script
-  id="gtag-init"
-  dangerouslySetInnerHTML={{
-    __html: `
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){window.dataLayer.push(arguments);}
-      gtag('js', new Date());
-      // Mobilde ilk yüklemeyi garantilemek için buraya config ekleyebiliriz
-      gtag('config', '${activeGAId}', { 
-        page_path: window.location.pathname,
-        debug_mode: true 
-      });
-    `,
-  }}
-/>
-<Suspense fallback={null}>
-  <GoogleAnalyticsTracker trackingId={activeGAId} />
-</Suspense>
+      <Script
+        src={`https://www.googletagmanager.com/gtag/js?id=${activeGAId}`}
+        // strategy="afterInteractive" satırını siliyoruz, varsayılan kalsın
+      />
+      <Script
+        id="gtag-init"
+        dangerouslySetInnerHTML={{
+          __html: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){window.dataLayer.push(arguments);}
+            gtag('js', new Date());
+            // Mobilde ilk yüklemeyi garantilemek için buraya config ekleyebiliriz
+            gtag('config', '${activeGAId}', { 
+              page_path: window.location.pathname,
+              debug_mode: true 
+            });
+          `,
+        }}
+      />
+      <Suspense fallback={null}>
+        <GoogleAnalyticsTracker trackingId={activeGAId} />
+      </Suspense>
+
       <div className="flex flex-col min-h-screen selection:bg-blue-600 selection:text-white">
         <Navbar settings={s} />
 
