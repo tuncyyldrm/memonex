@@ -7,6 +7,9 @@ import dynamic from 'next/dynamic';
 import { slugify } from '@/lib/utils';
 import Link from 'next/link';
 
+// En üstteki import satırını şöyle yap:
+import { saveProduct, savePost, savePage } from '@/app/admin/settings/actions';
+
 // ReactQuill Dinamik Import
 const ReactQuill = dynamic(() => import('react-quill-new'), { 
   ssr: false,
@@ -100,14 +103,17 @@ export default function BlogEditor({ params }: { params: Promise<{ id: string }>
   }), []);
 
   // 3. KAYDETME (DB Şeması ile tam uyumlu)
+// 3. KAYDETME (Merkezi Aksiyona Bağlandı)
   const handleSave = async () => {
     if (!title || !content) return alert('Başlık ve içerik gereklidir!');
     
     setLoading(true);
     const slug = slugify(title);
+    
+    // HTML etiketlerini temizleyip kısa özet oluşturuyoruz
     const excerpt = content.replace(/<[^>]*>/g, '').substring(0, 160).trim() + '...';
 
-    // İçerikteki ilk resmi featured_image olarak ayarla
+    // İçerikteki ilk resmi otomatik olarak "Kapak Fotoğrafı" yapıyoruz
     const imgRegex = /<img[^>]+src="([^">]+)"/;
     const match = content.match(imgRegex);
     const coverImage = match ? match[1] : null;
@@ -117,23 +123,18 @@ export default function BlogEditor({ params }: { params: Promise<{ id: string }>
       content, 
       slug, 
       excerpt, 
-      featured_image: coverImage, // DB'deki isme göre düzeltildi
+      featured_image: coverImage, 
       published: true,
       updated_at: new Date().toISOString()
     };
 
-    let error;
-    if (id === 'new') {
-      const result = await supabase.from('blog_posts').insert([postData]);
-      error = result.error;
-    } else {
-      const result = await supabase.from('blog_posts').update(postData).eq('id', id);
-      error = result.error;
-    }
+    // --- KRİTİK DEĞİŞİKLİK: Doğrudan supabase yerine aksiyonu çağırıyoruz ---
+    const { error } = await savePost(id, postData);
 
     if (error) {
       alert('Hata: ' + error.message);
     } else {
+      // Başarılıysa listeye dön ve sayfayı tazele
       router.push('/admin/blog');
       router.refresh();
     }

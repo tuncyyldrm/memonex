@@ -6,6 +6,9 @@ import { useRouter } from 'next/navigation';
 import { slugify, uploadImage } from '@/lib/utils';
 import Link from 'next/link';
 
+// En üstteki import satırını şöyle yap:
+import { saveProduct, savePost, savePage } from '@/app/admin/settings/actions';
+
 interface Props {
   params: Promise<{ id: string }>;
 }
@@ -110,8 +113,8 @@ const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     }));
   };
 
-  // --- KAYDETME FONKSİYONU ---
 
+// 2. handleSave fonksiyonunu şu şekilde sadeleştir:
 const handleSave = async () => {
     if (!formData.name || !formData.price) return alert('İsim ve Fiyat zorunludur!');
     
@@ -120,24 +123,23 @@ const handleSave = async () => {
     
     const payload = { 
       ...formData, 
-      price: parseFloat(formData.price) || 0, // NaN olmasını engeller
+      price: parseFloat(formData.price) || 0,
       slug 
     };
 
-    const query = id === 'new' 
-      ? supabase.from('products').insert([payload])
-      : supabase.from('products').update(payload).eq('id', id);
-
-    const { error } = await query;
+    // --- BURASI KRİTİK DEĞİŞİKLİK ---
+    // Artık 'supabase.from...' demiyoruz, hazırladığımız güvenli aksiyonu çağırıyoruz
+    const { error } = await saveProduct(id, payload);
     
     if (error) {
       alert('Hata: ' + error.message);
     } else {
+      // Başarılı ise ürün listesine dön
       router.push('/admin/products');
       router.refresh();
     }
     setLoading(false);
-  };
+};
 
   if (isInitialLoading) return (
     <div className="p-20 text-center font-black text-slate-200 animate-pulse uppercase tracking-[0.2em]">

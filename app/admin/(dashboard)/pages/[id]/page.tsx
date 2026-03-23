@@ -4,6 +4,9 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+// En üstteki import satırını şöyle yap:
+import { saveProduct, savePost, savePage } from '@/app/admin/settings/actions';
+
 export default function EditPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id } = use(params);
@@ -52,17 +55,18 @@ export default function EditPage({ params }: { params: Promise<{ id: string }> }
     setFormData({ ...formData, slug });
   };
 
-  const handleUpdate = async (e: React.FormEvent) => {
+const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setUpdating(true);
 
-    const { error } = await supabase
-      .from("pages")
-      .update({
-        ...formData,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id);
+    // Form verilerini hazırlıyoruz
+    const payload = {
+      ...formData,
+      updated_at: new Date().toISOString(),
+    };
+
+    // --- KRİTİK DEĞİŞİKLİK: Güvenli Server Action çağrılıyor ---
+    const { error } = await savePage(id, payload);
 
     if (!error) {
       router.push("/admin/pages");

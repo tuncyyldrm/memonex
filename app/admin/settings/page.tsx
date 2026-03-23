@@ -1,9 +1,15 @@
-import { supabase } from "@/lib/supabase";
+// app/admin/settings/page.tsx
+
+import { createClient } from "@/lib/supabase-server"; // SERVER CLIENT'I ÇAĞIR
 import SettingsForm from "./SettingsForm";
 import Link from "next/link";
 import "@/app/globals.css";
 
 export default async function AdminSettingsPage() {
+  // 1. Sunucu tarafı client'ını oluştur (AWAIT ŞART)
+  const supabase = await createClient();
+
+  // 2. Veriyi çek
   const { data: settings } = await supabase
     .from("site_settings")
     .select("*")
