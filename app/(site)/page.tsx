@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { stripHtml, formatDate } from "@/lib/utils";
 import { Metadata } from "next";
+export const dynamic = 'force-dynamic';
 
 // 1. DİNAMİK METADATA GENERATOR
 // Layout'taki "template" yapısıyla çakışmaması için optimize edildi.
