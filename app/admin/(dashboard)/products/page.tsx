@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+// En üstteki import satırını şöyle yap:
+import { saveProduct, savePost, savePage, deleteProduct } from '@/app/admin/settings/actions';
+
 // 1. Veritabanı sütun isimlerine göre arayüzü güncelledik
 interface Product {
   id: string;
@@ -39,18 +42,23 @@ export default function AdminProductList() {
     setLoading(false);
   }
 
-  // SİLME FONKSİYONU
+// SİLME FONKSİYONU - GÜNCELLENDİ ✅
   async function handleDelete(id: string, name: string) {
     if (!confirm(`"${name}" ürününü silmek istediğinize emin misiniz?`)) return;
 
-    const { error } = await supabase.from("products").delete().eq("id", id);
+    setLoading(true); // Liste üzerinde işlem yapıldığını belli edelim
+
+    // --- KRİTİK DEĞİŞİKLİK: Doğrudan supabase değil, actions'daki güvenli fonksiyonu çağırıyoruz ---
+    const { error } = await deleteProduct(id);
 
     if (error) {
       alert("Silme işlemi başarısız: " + error.message);
+      setLoading(false);
     } else {
-      // Sayfayı yenilemeden listeyi güncelle
-      setProducts(products.filter(p => p.id !== id));
-      router.refresh();
+      // Başarılıysa state'den de çıkar ki arayüz anında güncellensin
+      setProducts(prev => prev.filter(p => p.id !== id));
+      router.refresh(); // Vercel/Next cache'ini temizler
+      setLoading(false);
     }
   }
 

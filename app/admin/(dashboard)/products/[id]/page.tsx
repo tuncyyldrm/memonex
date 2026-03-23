@@ -198,18 +198,6 @@ const handleDelete = async () => {
     {loading ? 'İŞLEM YAPILIYOR...' : 'DEĞİŞİKLİKLERİ KAYDET'}
   </button>
 </div>
-        <div className="flex gap-4">
-          <Link href="/admin/products" className="px-6 py-4 rounded-2xl font-bold text-slate-400 hover:text-slate-900 transition-all text-xs tracking-widest uppercase">
-            İptal
-          </Link>
-          <button 
-            onClick={handleSave} 
-            disabled={loading} 
-            className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-900 transition-all shadow-xl shadow-blue-100 active:scale-95 disabled:opacity-50"
-          >
-            {loading ? 'İŞLEM YAPILIYOR...' : 'DEĞİŞİKLİKLERİ KAYDET'}
-          </button>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
