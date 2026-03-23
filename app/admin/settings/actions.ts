@@ -102,3 +102,23 @@ export async function savePage(id: string, payload: any) {
   }
   return { data, error };
 }
+
+// app/admin/settings/actions.ts
+
+export async function deleteProduct(id: string) {
+  const supabase = await createClient();
+  
+  // Silme işlemi
+  const { error } = await supabase
+    .from('products')
+    .delete()
+    .eq('id', id);
+
+  if (!error) {
+    // Silinen ürünün ana sayfadan ve listeden anında kalkması için
+    revalidatePath("/");
+    revalidatePath("/admin/products");
+  }
+  
+  return { error };
+}

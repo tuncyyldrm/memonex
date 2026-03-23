@@ -7,7 +7,7 @@ import { slugify, uploadImage } from '@/lib/utils';
 import Link from 'next/link';
 
 // En üstteki import satırını şöyle yap:
-import { saveProduct, savePost, savePage } from '@/app/admin/settings/actions';
+import { saveProduct, savePost, savePage, deleteProduct } from '@/app/admin/settings/actions';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -141,6 +141,26 @@ const handleSave = async () => {
     setLoading(false);
 };
 
+// handleSave'in altına ekle:
+const handleDelete = async () => {
+    if (id === 'new') return; // Yeni ürün sayfasındaysak silme butonu çalışmasın
+
+    if (!confirm('Bu ürünü kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz.')) return;
+
+    setLoading(true);
+    // actions.ts içinden import ettiğimiz deleteProduct'ı çağırıyoruz
+    const { error } = await deleteProduct(id);
+
+    if (error) {
+        alert('Hata: ' + error.message);
+    } else {
+        // Başarılıysa ürün listesine dön
+        router.push('/admin/products');
+        router.refresh();
+    }
+    setLoading(false);
+};
+
   if (isInitialLoading) return (
     <div className="p-20 text-center font-black text-slate-200 animate-pulse uppercase tracking-[0.2em]">
       Veriler Hazırlanıyor...
@@ -154,6 +174,30 @@ const handleSave = async () => {
         <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase">
           {id === 'new' ? '✨ Yeni Ürün' : '🛠️ Düzenle'}
         </h1>
+        <div className="flex gap-4">
+  {/* SADECE DÜZENLEME MODUNDA GÖRÜNÜR */}
+  {id !== 'new' && (
+    <button 
+      onClick={handleDelete}
+      disabled={loading}
+      className="px-6 py-4 rounded-2xl font-bold text-red-500 hover:bg-red-50 transition-all text-xs tracking-widest uppercase border border-red-100 disabled:opacity-50"
+    >
+      {loading ? 'SİLİNİYOR...' : 'Ürünü Sil'}
+    </button>
+  )}
+
+  <Link href="/admin/products" className="px-6 py-4 rounded-2xl font-bold text-slate-400 hover:text-slate-900 transition-all text-xs tracking-widest uppercase">
+    İptal
+  </Link>
+  
+  <button 
+    onClick={handleSave} 
+    disabled={loading} 
+    className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-900 transition-all shadow-xl shadow-blue-100 active:scale-95 disabled:opacity-50"
+  >
+    {loading ? 'İŞLEM YAPILIYOR...' : 'DEĞİŞİKLİKLERİ KAYDET'}
+  </button>
+</div>
         <div className="flex gap-4">
           <Link href="/admin/products" className="px-6 py-4 rounded-2xl font-bold text-slate-400 hover:text-slate-900 transition-all text-xs tracking-widest uppercase">
             İptal
