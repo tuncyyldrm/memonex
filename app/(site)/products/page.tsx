@@ -4,7 +4,8 @@ import Image from "next/image";
 import { Metadata } from "next";
 import { cache } from "react";
 
-export const revalidate = 3600; // 1 saatlik ISR (Incremental Static Regeneration)
+//export const revalidate = 3600; // 1 saatlik ISR (Incremental Static Regeneration)
+export const dynamic = 'force-dynamic';
 
 // 1. DATA FETCHING (Cache & Performance)
 const getCatalogData = cache(async () => {
