@@ -10,8 +10,8 @@
   },
   "dependencies": {
     "@next/third-parties": "^16.1.6",
-    "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.5.0",
+    "@react-three/drei": "9.122.0",
+    "@react-three/fiber": "8.18.0",
     "@supabase/auth-helpers-react": "^0.15.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.97.0",
