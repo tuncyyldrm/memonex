@@ -10,7 +10,7 @@ const ADMIN_NAV_ITEMS = [
   { label: "Sayfa Yönetimi", href: "/admin/pages", icon: "📄", id: "pages" },
   { label: "Blog Yönetimi", href: "/admin/blog", icon: "📝", id: "blog" },
   { label: "Ürün Kataloğu", href: "/admin/products", icon: "📦", id: "products" },
-  { label: "Medya Galeri", href: "/admin/media", icon: "🖼️", id: "media" },
+  { label: "Filemantler", href: "/admin/filament", icon: "🖼️", id: "filament" },
   { label: "Genel Ayarlar", href: "/admin/settings", icon: "⚙️", id: "settings" }, // Yeni eklendi
 ] as const;
 
