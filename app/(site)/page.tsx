@@ -94,7 +94,7 @@ export default async function Home() {
       />
 
       {/* --- HERO SECTION --- */}
-      <section className="relative pt-32 pb-24 px-6 text-center bg-slate-50 overflow-hidden">
+      <section className="relative pt-18 pb-18 px-6 text-center bg-slate-50 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[700px] bg-blue-100/30 rounded-full blur-[140px] -z-10 animate-pulse" />
 
         <div className="max-w-5xl mx-auto">
@@ -148,46 +148,55 @@ export default async function Home() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-24">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-20">
           {products.length > 0 ? products.map((product) => (
-            <Link key={product.id} href={`/products/${product.slug}`} className="group block">
-              <div className="aspect-square bg-slate-100 rounded-[3rem] mb-8 overflow-hidden relative border border-slate-100 transition-all duration-700 group-hover:shadow-[0_40px_80px_-15px_rgba(37,99,235,0.15)] group-hover:-translate-y-3">
-                {product.image ? (
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    fill
-                    className="object-cover transition-transform duration-[1.5s] group-hover:scale-110"
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center font-black text-slate-200 text-8xl italic uppercase">
-                    {brandName[0]}{brandSuffix[0]}
+              <Link key={product.id} href={`/products/${product.slug}`} className="group block">
+                {/* Görsel Alanı */}
+                <div className="aspect-square bg-slate-100 rounded-[3rem] mb-8 overflow-hidden relative border border-slate-100 transition-all duration-700 group-hover:shadow-[0_40px_80px_-15px_rgba(37,99,235,0.15)] group-hover:-translate-y-3">
+                  {product.image ? (
+                    <Image
+                      src={product.image}
+                      alt={product.name}
+                      fill
+                      className="object-cover transition-transform duration-[1.5s] group-hover:scale-110"
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center font-black text-slate-200 text-8xl italic uppercase">
+                      {brandName[0]}{brandSuffix[0]}
+                    </div>
+                  )}
+                  
+                  {/* Kategori Badge - Görselin üzerine, sol alta taşındı */}
+                  <div className="absolute bottom-6 left-6 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-500">
+                    <span className="text-[8px] font-black text-white bg-blue-600 px-4 py-2 rounded-full uppercase tracking-[0.3em] shadow-xl">
+                      {product.category || '3D PRINT'}
+                    </span>
                   </div>
-                )}
-              </div>
+                </div>
 
-              <div className="px-2">
-                <div className="flex justify-between items-start mb-4">
-                  <h3 className="text-2xl font-black text-slate-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight leading-none max-w-[70%]">
+                {/* Bilgi Alanı */}
+                <div className="px-2">
+                  <h3 className="text-1xl md:text-2xl font-black text-slate-900 group-hover:text-blue-600 transition-colors uppercase italic tracking-tighter leading-[0.85] mb-4">
                     {product.name}
                   </h3>
-                  <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-widest">
-                    {product.category || '3D Print'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between pt-6 border-t border-slate-100">
-                  <p className="text-slate-900 font-black text-2xl tracking-tighter">
-                    {new Intl.NumberFormat('tr-TR').format(product.price)} 
-                    <span className="text-blue-600 text-sm italic ml-1">{s?.price_currency || '₺'}</span>
-                  </p>
-                  <div className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center group-hover:bg-slate-900 group-hover:border-slate-900 transition-all group-hover:text-white">
-                    <span className="text-xl">↗</span>
+                  
+                  <div className="flex items-center justify-between pt-6 border-t border-slate-100">
+                    <div className="flex flex-col">
+                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Fiyat</span>
+                      <p className="text-slate-900 font-black text-2xl tracking-tighter">
+                        {new Intl.NumberFormat('tr-TR').format(product.price)} 
+                        <span className="text-blue-600 text-sm italic ml-1">{s?.price_currency || '₺'}</span>
+                      </p>
+                    </div>
+                    
+                    <div className="w-12 h-12 rounded-full border-2 border-slate-100 flex items-center justify-center group-hover:bg-slate-900 group-hover:border-slate-900 transition-all duration-500 group-hover:text-white">
+                      <span className="text-xl transform group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform">↗</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Link>
-          )) : (
+              </Link>
+            )) : (
             <div className="col-span-full py-20 text-center text-slate-400 font-bold uppercase tracking-widest italic">
                 {s?.catalog_empty_msg || "Henüz ürün eklenmedi."}
             </div>
@@ -196,9 +205,9 @@ export default async function Home() {
       </section>
 
       {/* --- BLOG ÖNİZLEME --- */}
-      <section id="blog" className="py-32 px-6 bg-slate-900 text-white rounded-[3rem] md:rounded-[5rem] mx-4 md:mx-8 my-12 overflow-hidden relative">
+      <section id="blog" className="py-12 px-6 bg-slate-900 text-white rounded-[3rem] md:rounded-[5rem] mx-4 md:mx-8 my-12 overflow-hidden relative">
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-24 gap-10">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-10">
             <div>
               <h2 className="text-6xl md:text-8xl font-black tracking-tighter uppercase italic leading-[0.8] mb-6">
                 TEKNİK<br /><span className="text-blue-500">GÜNLÜK</span>
@@ -243,8 +252,8 @@ export default async function Home() {
       </section>
 
       {/* --- CTA SECTION --- */}
-      <section className="py-44 text-center bg-white px-6">
-        <div className="max-w-4xl mx-auto bg-slate-50 py-28 px-8 rounded-[6rem] border border-slate-100 relative group overflow-hidden z-0">
+      <section className="py-24 text-center bg-white px-6">
+        <div className="max-w-4xl mx-auto bg-slate-50 py-18 px-8 rounded-[6rem] border border-slate-100 relative group overflow-hidden z-0">
           <div className="absolute inset-0 bg-blue-600 translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-in-out -z-10" />
           
           <h2 className="text-6xl md:text-8xl font-black mb-14 tracking-tighter uppercase leading-[0.85] text-slate-900 group-hover:text-white transition-colors duration-500 relative">

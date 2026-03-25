@@ -1,5 +1,28 @@
 @import "tailwindcss";
+/* globals.css */
 
+@layer base {
+  /* Tüm butonlar ve linkler için varsayılan cursor */
+  a, 
+  button, 
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"] {
+    cursor: pointer !important;
+  }
+
+  /* Eğer bir butonu disable (devre dışı) bırakırsan cursor engellensin */
+  button:disabled,
+  a[disabled] {
+    cursor: not-allowed !important;
+  }
+}
+
+/* Ekstra: Framer Motion veya benzeri kütüphanelerle div'leri buton yapıyorsan */
+.cursor-pointer {
+  cursor: pointer !important;
+}
 @layer components {
   /* 1. ANA KAPSAICI DÜZENLEMESİ */
   .custom-content {
@@ -72,3 +95,4 @@
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { @apply bg-slate-50; }
 ::-webkit-scrollbar-thumb { @apply bg-slate-200 rounded-full hover:bg-blue-600 transition-colors; }
+

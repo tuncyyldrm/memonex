@@ -22,26 +22,28 @@ export default function ProductGallery({ images = [], productName = "3D Baskı P
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
       {/* --- Ana Görsel Alanı --- */}
-      <div className="group relative aspect-square bg-[#F8FAFC] rounded-[3.5rem] border border-slate-100 overflow-hidden shadow-[0_20px_50px_-20px_rgba(0,0,0,0.05)]">
-        
-        {activeImage ? (
-          <div className="relative w-full h-full p-4 transition-all duration-500 ease-in-out">
-            <Image 
-              key={activeImage} // Key değişimi Next.js'in görseli yumuşak yüklemesini tetikler
-              src={activeImage} 
-              alt={`${productName} - Memonex3D Hassas Üretim`} 
-              fill
-              priority 
-              className="object-contain p-8 transition-transform duration-700 group-hover:scale-105"
-              sizes="(max-width: 768px) 100vw, 50vw"
-            />
-          </div>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-slate-50">
-            <span className="text-slate-200 font-black text-6xl italic tracking-tighter opacity-50">M3D</span>
-          </div>
-        )}
-      </div>
+<div className="group relative aspect-square bg-[#F8FAFC] rounded-[2.5rem] md:rounded-[3.5rem] border border-slate-100 overflow-hidden shadow-[0_20px_50px_-20px_rgba(0,0,0,0.05)]">
+  
+  {activeImage ? (
+    <div className="relative w-full h-full transition-all duration-500 ease-in-out">
+      <Image 
+        key={activeImage} 
+        src={activeImage} 
+        alt={`${productName} - Memonex3D Hassas Üretim`} 
+        fill
+        priority 
+        /* object-cover: Görseli kare alana yayar ve boşluk bırakmaz */
+        /* p-0: Padding'i sıfırlayarak görselin kenarlara yaslanmasını sağlar */
+        className="object-cover p-0 transition-transform duration-700 group-hover:scale-110"
+        sizes="(max-width: 768px) 100vw, 50vw"
+      />
+    </div>
+  ) : (
+    <div className="w-full h-full flex items-center justify-center bg-slate-50">
+      <span className="text-slate-200 font-black text-6xl italic tracking-tighter opacity-50">M3D</span>
+    </div>
+  )}
+</div>
       
       {/* --- Thumbnails --- */}
       {safeImages.length > 1 && (
@@ -76,17 +78,7 @@ export default function ProductGallery({ images = [], productName = "3D Baskı P
 
       {/* --- Teknik Rozetler --- */}
       <div className="grid grid-cols-3 gap-5">
-        {[
-          { icon: "∞", label: "Mukavemet", desc: "Endüstriyel Sınıf" },
-          { icon: "0.05", label: "Hassasiyet", desc: "Mikron Seviye" },
-          { icon: "PRO", label: "Materyal", desc: "Premium Seri" }
-        ].map((item, i) => (
-          <section key={i} className="bg-white p-6 rounded-[2.5rem] text-center border border-slate-100 hover:border-blue-100 transition-colors duration-300">
-            <header className="text-blue-600 font-black text-2xl mb-2">{item.icon}</header>
-            <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">{item.label}</h3>
-            <p className="text-[9px] font-bold text-slate-400 uppercase mt-1.5 leading-none">{item.desc}</p>
-          </section>
-        ))}
+
       </div>
     </div>
   );

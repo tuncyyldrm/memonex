@@ -19,7 +19,7 @@ const getProductData = cache(async (slug: string) => {
   return { product: productRes.data, s: settingsRes.data };
 });
 
-// 2. METADATA (Layout Template ile %100 Uyumlu)
+// 2. METADATA
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const { product, s } = await getProductData(slug);
@@ -29,13 +29,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const brand = `${s?.brand_name || "Memonex"} ${s?.brand_suffix || "3D"}`;
   const siteUrl = s?.site_url || "https://memonex3d.com";
   
-  // ÖNEMLİ: Sadece ürün adını döndür, Layout template'i ( | Marka) otomatik ekleyecek.
   return {
     title: product.name, 
     description: product.description?.slice(0, 160) || s?.site_description_default,
-    alternates: {
-      canonical: `${siteUrl}/products/${slug}`,
-    },
+    alternates: { canonical: `${siteUrl}/products/${slug}` },
     openGraph: {
       title: `${product.name} - ${brand}`,
       description: product.description || "",
@@ -53,10 +50,8 @@ export default async function ProductDetail({ params }: Props) {
   if (!product) return notFound();
 
   const brandName = s?.brand_name || "MEMONEX";
-  const brandSuffix = s?.brand_suffix || "3D";
   const siteUrl = s?.site_url || "https://memonex3d.com";
 
-  // Galeri resimlerini birleştir ve temizle
   const allImages = Array.from(new Set([
     product.image,
     ...(Array.isArray(product.gallery) ? product.gallery : [])
@@ -64,14 +59,13 @@ export default async function ProductDetail({ params }: Props) {
 
   const formattedPrice = new Intl.NumberFormat('tr-TR').format(product.price || 0);
 
-  // 3. SCHEMA.ORG (Zengin Sonuçlar İçin Optimize Edildi)
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     "name": product.name,
     "image": allImages.length > 0 ? allImages : [`${siteUrl}/placeholder.jpg`],
-    "description": product.description || `${product.name} yüksek hassasiyetli 3D baskı modeli.`,
-    "brand": { "@type": "Brand", "name": `${brandName} ${brandSuffix}` },
+    "description": product.description?.slice(0, 160),
+    "brand": { "@type": "Brand", "name": brandName },
     "offers": {
       "@type": "Offer",
       "url": `${siteUrl}/products/${product.slug}`,
@@ -79,7 +73,7 @@ export default async function ProductDetail({ params }: Props) {
       "price": product.price || 0,
       "availability": "https://schema.org/InStock",
       "itemCondition": "https://schema.org/NewCondition",
-      "priceValidUntil": new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0]
+      "priceValidUntil": "2026-12-31"
     }
   };
 
@@ -90,26 +84,26 @@ export default async function ProductDetail({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 md:py-20">
-        {/* Breadcrumb Navigation */}
-        <nav className="mb-8 md:mb-16 flex items-center gap-2 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 md:py-10">
+        {/* Breadcrumb - Minimalist */}
+        <nav className="mb-6 md:mb-8 flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.15em] text-slate-400">
           <Link href="/" className="hover:text-blue-600 transition">Ana Sayfa</Link>
           <span className="opacity-30">/</span>
           <Link href="/products" className="hover:text-blue-600 transition">Katalog</Link>
           <span className="opacity-30">/</span>
-          <span className="text-slate-900 truncate max-w-[150px] md:max-w-none">{product.name}</span>
+          <span className="text-slate-900 truncate max-w-[100px] md:max-w-none">{product.name}</span>
         </nav>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-20 lg:gap-24 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 items-start">
           {/* Sol: Görsel Galerisi */}
-          <div className="lg:sticky lg:top-28">
+          <div className="lg:sticky lg:top-24">
             <ProductGallery images={allImages} />
           </div>
 
           {/* Sağ: Ürün Bilgileri */}
           <div className="flex flex-col">
-            <header className="mb-8 md:mb-12">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[8px] md:text-[9px] font-black uppercase tracking-widest mb-4 md:mb-6">
+            <header className="mb-6 md:mb-8">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[8px] font-black uppercase tracking-widest mb-4">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
@@ -117,47 +111,48 @@ export default async function ProductDetail({ params }: Props) {
                 {brandName} ATÖLYE: AKTİF ÜRETİM
               </div>
               
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-slate-900 tracking-tighter leading-[0.95] mb-6 md:mb-8 uppercase italic">
+              <h1 className="text-1xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tighter leading-[0.95] mb-5 uppercase italic">
                 {product.name}
               </h1>
               
-              <div className="flex flex-wrap items-baseline gap-3 md:gap-4">
-                <span className="text-4xl md:text-5xl font-black text-blue-600 tracking-tighter">
+              <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                <span className="text-3xl md:text-4xl font-black text-blue-600 tracking-tighter">
                   {formattedPrice}
                 </span>
-                <span className="text-base md:text-lg font-black text-blue-600 tracking-tighter uppercase">
+                <span className="text-sm md:text-base font-black text-blue-600 tracking-tighter uppercase">
                    {s?.price_currency || 'TL'}
                 </span>
-                <div className="pl-4 border-l border-slate-200 text-[8px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-tight">
+                <div className="pl-3 border-l border-slate-200 text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-tight">
                   KDV DAHİL <br /> BAŞLAYAN FİYATLAR
                 </div>
               </div>
             </header>
 
-            <section className="mb-10 md:mb-16">
-              <div className="relative pl-6 border-l-4 border-blue-600/20">
-                <p className="text-lg md:text-xl lg:text-2xl text-slate-700 font-medium leading-relaxed italic tracking-tight">
+            {/* Ürün Açıklaması - Satır sonu desteği eklendi */}
+            <section className="mb-8 md:mb-10">
+              <div className="relative pl-5 border-l-4 border-blue-600/20">
+                <p className="text-sm md:text-base text-slate-700 font-medium leading-relaxed italic tracking-tight whitespace-pre-line">
                   {product.description || `${product.name} projeniz için yüksek hassasiyetli 3D baskı çözümleri sunuyoruz.`}
                 </p>
               </div>
             </section>
 
             {/* Teknik Detaylar Kartı */}
-            <section className="mb-10 md:mb-16 bg-slate-50/50 p-6 md:p-8 rounded-[2.5rem] border border-slate-100">
-              <h2 className="text-slate-900 font-black text-[10px] uppercase tracking-[0.3em] mb-6 flex items-center gap-4">
+            <section className="mb-8 md:mb-10 bg-slate-50/50 p-5 md:p-6 rounded-[1.5rem] border border-slate-100">
+              <h2 className="text-slate-900 font-black text-[9px] uppercase tracking-[0.3em] mb-4 flex items-center gap-4">
                 Üretim Parametreleri
                 <span className="flex-1 h-[1px] bg-slate-200" />
               </h2>
               
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {[
                   { label: "Baskı Teknolojisi", value: product.technology || "FDM / Industrial" },
-                  { label: "Malzeme Standartı", value: product.material || "PLA+ / PETG / Carbon Fiber" },
+                  { label: "Malzeme Standartı", value: product.material || "PLA+ / PETG" },
                   { label: "Hassasiyet", value: "0.12mm - 0.20mm" },
                   { label: "Üretim Konumu", value: s?.workshop_address?.split(',')[0] || "Isparta / Türkiye" }
                 ].map((spec, i) => (
-                  <div key={i} className="flex justify-between items-center py-3 border-b border-slate-100 last:border-0 px-1">
-                    <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest">{spec.label}</span>
+                  <div key={i} className="flex justify-between items-center py-2.5 border-b border-slate-100 last:border-0 px-1">
+                    <span className="text-[8px] text-slate-400 font-black uppercase tracking-widest">{spec.label}</span>
                     <span className="text-xs md:text-sm text-slate-900 font-black tracking-tight">{spec.value}</span>
                   </div>
                 ))}
@@ -165,15 +160,14 @@ export default async function ProductDetail({ params }: Props) {
             </section>
 
             {/* Aksiyon Butonları */}
-            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-auto">
+            <div className="flex flex-col sm:flex-row gap-3 mt-auto">
               <Link 
                 href={`https://wa.me/${s?.whatsapp_no}?text=${encodeURIComponent(`Merhaba, "${product.name}" ürünü hakkında bilgi almak ve sipariş vermek istiyorum.`)}`}
                 target="_blank"
-                className="w-full sm:flex-[2] bg-slate-900 text-white text-center py-5 md:py-6 rounded-2xl md:rounded-[2rem] font-black text-[10px] md:text-[11px] uppercase tracking-[0.2em] hover:bg-blue-600 transition-all shadow-xl active:scale-[0.98]"
+                className="w-full sm:flex-[3] bg-slate-900 text-white text-center py-4 md:py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-blue-600 transition-all shadow-lg active:scale-[0.98] flex items-center justify-center"
               >
                 WHATSAPP İLE SİPARİŞ VER
               </Link>
-              
               <ShareButton title={product.name} />
             </div>
           </div>
