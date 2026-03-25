@@ -134,7 +134,7 @@ export default function Navbar({ settings }: NavbarProps) {
           isOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'
         }`}
       >
-        <div className={`flex flex-col h-full px-10 pt-32 pb-12 transition-transform duration-500 ${isOpen ? 'translate-y-0' : 'translate-y-10'}`}>
+        <div className={`flex flex-col h-full px-10 pt-22 pb-12 transition-transform duration-500 ${isOpen ? 'translate-y-0' : 'translate-y-10'}`}>
           <div className="flex flex-col gap-8">            
             {navLinks.map((link, idx) => (
               <Link 
@@ -142,7 +142,7 @@ export default function Navbar({ settings }: NavbarProps) {
                 href={link.href}
                 onClick={() => setIsOpen(false)}
                 style={{ transitionDelay: `${idx * 50}ms` }}
-                className={`text-3xl font-black uppercase tracking-tighter transition-all flex items-center justify-between group ${
+                className={`text-2xl font-black uppercase tracking-tighter transition-all flex items-center justify-between group ${
                   pathname === link.href ? 'text-blue-600 translate-x-2' : 'text-slate-900 hover:translate-x-2'
                 }`}
               >
@@ -154,18 +154,7 @@ export default function Navbar({ settings }: NavbarProps) {
             ))}
           </div>
 
-          <div className="mt-auto border-t border-slate-100 pt-10 flex flex-col gap-8">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Konum</p>
-                <p className="text-slate-900 font-bold text-sm uppercase">{city}</p>
-              </div>
-              <div className="space-y-1 text-right">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Destek</p>
-                <p className="text-slate-900 font-bold text-sm uppercase">7/24 Aktif</p>
-              </div>
-            </div>
-            
+          <div className="mt-10 border-t border-slate-20 pt-5 flex flex-col gap-4">   
             <Link 
               href={`/hizli-teklif`} 
               rel="noopener noreferrer"
@@ -175,6 +164,16 @@ export default function Navbar({ settings }: NavbarProps) {
               <span className="relative z-10">HIZLI TEKLİF</span>
               <div className="absolute inset-0 bg-slate-900 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
             </Link>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Konum</p>
+                <p className="text-slate-900 font-bold text-sm uppercase">{city}</p>
+              </div>
+              <div className="space-y-1 text-right">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Destek</p>
+                <p className="text-slate-900 font-bold text-sm uppercase">7/24 Aktif</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
