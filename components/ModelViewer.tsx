@@ -33,14 +33,13 @@ interface ViewerProps {
   color: string;
 }
 
-// Kamerayı modele odaklayan Slicer mekanizması
 function CameraRig({ size }: { size: THREE.Vector3 }) {
   const { camera, controls } = useThree();
 
   useEffect(() => {
     if (size.length() > 0) {
       const maxDim = Math.max(size.x, size.y, size.z);
-      const distance = maxDim * 2.2; 
+      const distance = maxDim * 2.5; 
 
       camera.position.set(distance, distance, distance);
       camera.lookAt(0, size.y / 2, 0);
@@ -55,7 +54,6 @@ function CameraRig({ size }: { size: THREE.Vector3 }) {
   return null;
 }
 
-// Modelin fiziksel özelliklerini ve yerleşimini yöneten bileşen
 function ModelManager({ geometry, color }: { geometry: THREE.BufferGeometry, color: string }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const [size, setSize] = useState<THREE.Vector3>(new THREE.Vector3(0, 0, 0));
@@ -70,7 +68,6 @@ function ModelManager({ geometry, color }: { geometry: THREE.BufferGeometry, col
       setSize(newSize);
       
       if (meshRef.current) {
-        // Modeli tablanın (0,0,0) noktasına tam oturtur
         meshRef.current.position.y = newSize.y / 2;
       }
     }
@@ -83,104 +80,97 @@ function ModelManager({ geometry, color }: { geometry: THREE.BufferGeometry, col
       <mesh ref={meshRef} geometry={geometry} castShadow receiveShadow>
         <meshStandardMaterial 
           color={color} 
-          /* --- MAT FILAMENT DOKUSU (GERÇEKÇİ SLICER HİSSİ) --- */
-          roughness={0.85}       
-          metalness={0.0}        
+          roughness={0.7}       // Işığı dengeli dağıtan mat doku
+          metalness={0.1}       // Hafif plastik pırıltısı
           emissive={"#000000"}   
-          envMapIntensity={0.2}  
+          envMapIntensity={0.5} // Açık temada çevreyi daha iyi yansıtır
         />
       </mesh>
 
       {size.length() > 0 && (
         <ContactShadows 
           position={[0, 0, 0]} 
-          opacity={0.4} 
+          opacity={0.25}       // Açık zeminde daha yumuşak gölge
           scale={Math.max(size.x, size.z) * 4} 
-          blur={2.5} 
-          far={size.y * 1.5} 
+          blur={3} 
+          far={size.y * 2} 
         />
       )}
     </group>
   );
 }
 
-// ANA BİLEŞEN
 export default function ModelViewer({ geometry, color }: ViewerProps) {
-  // Model yoksa gösterilecek boş platform (Empty Bed)
   if (!geometry) return (
-    <div className="w-full h-[550px] flex flex-col items-center justify-center bg-[#0f172a] rounded-[3rem] border-2 border-slate-800 relative overflow-hidden group">
-      <div className="absolute inset-0 opacity-[0.1] bg-[linear-gradient(to_right,#475569_1px,transparent_1px),linear-gradient(to_bottom,#475569_1px,transparent_1px)] bg-[size:40px_40px]" />
-      <div className="text-6xl mb-4 grayscale opacity-30 group-hover:rotate-12 transition-transform duration-700">⚙️</div>
-      <p className="font-black text-slate-600 uppercase tracking-[0.4em] text-[10px]">ANYCUBIC PLATFORM READY</p>
+    <div className="w-full h-[550px] flex flex-col items-center justify-center bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 relative overflow-hidden group">
+      <div className="absolute inset-0 opacity-[0.05] bg-[radial-gradient(#334155_1px,transparent_1px)] bg-[size:20px_20px]" />
+      <div className="text-6xl mb-4 grayscale opacity-20 group-hover:scale-110 transition-transform duration-500">📦</div>
+      <p className="font-black text-slate-400 uppercase tracking-[0.4em] text-[10px]">Model Analizi Bekleniyor</p>
     </div>
   );
 
   return (
-    <div className="w-full h-[550px] bg-[#1a1c1e] rounded-[3rem] overflow-hidden border border-slate-300 shadow-2xl relative group">
+    <div className="w-full h-[550px] bg-[#f8fafc] rounded-[3rem] overflow-hidden border border-slate-200 shadow-xl relative group">
       {/* Teknik Bilgi Overlay */}
-      <div className="absolute top-6 left-6 z-10 space-y-2">
-        <div className="bg-blue-600/90 backdrop-blur-md px-4 py-1.5 rounded-xl border border-blue-400/30 shadow-lg">
-          <p className="text-[9px] font-black uppercase text-white tracking-widest flex items-center gap-2">
-            <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
-            MEMONEX ANALYZER ENGINE V5
+      <div className="absolute top-6 left-6 z-10">
+        <div className="bg-white/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-slate-200 shadow-sm transition-all group-hover:translate-x-1">
+          <p className="text-[10px] font-black uppercase text-slate-600 tracking-widest flex items-center gap-2">
+            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+            MEMONEX STUDIO V5
           </p>
         </div>
       </div>
       
       <Suspense fallback={
-        <div className="w-full h-full bg-[#1a1c1e] flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500" />
+        <div className="w-full h-full bg-slate-50 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-blue-600" />
         </div>
       }>
         <Canvas 
           shadows 
           gl={{ 
             antialias: true,
-            toneMapping: THREE.NoToneMapping, // Renkleri olduğu gibi (saf) verir
+            toneMapping: THREE.ACESFilmicToneMapping, // Açık temada daha zengin renkler
             powerPreference: "high-performance" 
           }}
         >
-          {/* Teknik Koyu Arka Plan */}
-          <color attach="background" args={['#c7cfd6']} />
+          {/* Aydınlık Arka Plan (Soft Gri-Mavi) */}
+          <color attach="background" args={['#f1f5f9']} />
           
-          <PerspectiveCamera makeDefault fov={40} position={[250, 250, 250]} />
+          <PerspectiveCamera makeDefault fov={38} position={[250, 250, 250]} />
           
           <Environment preset="city" /> 
-          <ambientLight intensity={0.7} /> 
+          <ambientLight intensity={0.8} /> 
           
-          {/* Üretim Aydınlatması */}
-          <spotLight position={[500, 500, 500]} intensity={1.2} angle={0.3} penumbra={1} castShadow />
-          <pointLight position={[-500, 300, -500]} intensity={0.4} color="#3b82f6" />
-          <hemisphereLight intensity={0.2} color="#ffffff" groundColor="#000000" />
+          {/* Stüdyo Tipi Aydınlatma */}
+          <spotLight position={[400, 400, 400]} intensity={1} angle={0.3} penumbra={1} castShadow />
+          <pointLight position={[-400, 200, -400]} intensity={0.5} color="#ffffff" />
 
           <ModelManager geometry={geometry} color={color} />
           
-          {/* TEKNİK IZGARA (ANYCUBIC TABLASI GİBİ) */}
+          {/* AÇIK RENK TEKNİK IZGARA */}
           <Grid 
-            args={[500, 500]} 
+            args={[600, 600]} 
             cellSize={10} 
-            cellColor="#ebeff0" 
-            cellThickness={1}
+            cellColor="#cbd5e1" 
+            cellThickness={0.5}
             sectionSize={50} 
-            sectionColor="#ebeff0" 
-            sectionThickness={1.5}
-            fadeDistance={1000}
+            sectionColor="#94a3b8" 
+            sectionThickness={1}
+            fadeDistance={800}
             infiniteGrid={false}
             position={[0, -0.01, 0]}
           />
 
-          {/* EKSEN GÖSTERGESİ (GIZMO) */}
           <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
-            <GizmoViewport axisColors={['#ff3e3e', '#32cd32', '#3b82f6']} labelColor="white" />
+            <GizmoViewport axisColors={['#ef4444', '#22c55e', '#3b82f6']} labelColor="#64748b" />
           </GizmoHelper>
 
           <OrbitControls 
             makeDefault 
             maxPolarAngle={Math.PI / 2.1} 
             enableDamping 
-            dampingFactor={0.1}
-            minDistance={50}
-            maxDistance={1500}
+            dampingFactor={0.08}
           />
         </Canvas>
       </Suspense>
