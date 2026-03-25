@@ -1,185 +1,503 @@
 'use client';
 
-import { Canvas, useThree, ThreeElements } from '@react-three/fiber';
-import { OrbitControls, Grid, Html, ContactShadows, Environment, PerspectiveCamera } from '@react-three/drei';
-import { Suspense, useRef, useState, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { useDropzone } from 'react-dropzone';
 import * as THREE from 'three';
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
+import { supabase } from '@/lib/supabase';
 
-// --- TYPESCRIPT GLOBAL JSX TANIMLAMASI ---
-// 'color', 'mesh' gibi etiketlerin TypeScript tarafından tanınmasını sağlar.
-declare global {
-  namespace JSX {
-    interface IntrinsicElements extends ThreeElements {
-      color: ThreeElements['color'] & { attach?: string; args?: any[] };
-      ambientLight: ThreeElements['ambientLight'];
-      spotLight: ThreeElements['spotLight'];
-      pointLight: ThreeElements['pointLight'];
-      group: ThreeElements['group'];
-      mesh: ThreeElements['mesh'];
-      meshStandardMaterial: ThreeElements['meshStandardMaterial'];
-    }
-  }
-}
+// DİKKAT: @react-three/fiber importu buradan kaldırıldı. 
+// ModelViewer'ı Next.js 16 hatasından kaçınmak için dinamik (client-side) yüklüyoruz.
+import dynamic from 'next/dynamic';
 
-interface ViewerProps {
-  geometry: THREE.BufferGeometry | null;
-  color: string;
-}
-
-// Kamerayı modele otomatik odaklayan yardımcı bileşen
-function CameraRig({ size }: { size: THREE.Vector3 }) {
-  const { camera, controls } = useThree();
-
-  useEffect(() => {
-    if (size.length() > 0) {
-      // Modelin en büyük boyutuna göre mesafe (v4.2 optimize)
-      const maxDim = Math.max(size.x, size.y, size.z);
-      const distance = maxDim * 2.5; 
-
-      camera.position.set(distance, distance, distance);
-      camera.lookAt(0, size.y / 2, 0);
-      
-      if (controls) {
-        // @ts-ignore - OrbitControls target erişimi
-        (controls as any).target.set(0, size.y / 2, 0);
-        (controls as any).update();
-      }
-    }
-  }, [size, camera, controls]);
-
-  return null;
-}
-
-function ModelManager({ geometry, color }: { geometry: THREE.BufferGeometry, color: string }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const [size, setSize] = useState<THREE.Vector3>(new THREE.Vector3(0, 0, 0));
-
-  useEffect(() => {
-    if (geometry) {
-      geometry.computeBoundingBox();
-      geometry.computeVertexNormals();
-      
-      // ÖNEMLİ: Geometry döndüğünde merkezi ve taban hizasını yeniler
-      const boundingBox = geometry.boundingBox!;
-      const newSize = new THREE.Vector3();
-      boundingBox.getSize(newSize);
-      setSize(newSize);
-      
-      if (meshRef.current) {
-        // Modeli tam olarak tablanın (grid) üzerine oturtur
-        meshRef.current.position.y = newSize.y / 2;
-      }
-    }
-  }, [geometry]);
-
-  const Label = ({ pos, text, axis }: { pos: [number, number, number], text: string, axis: string }) => (
-    <Html 
-      position={pos} 
-      center 
-      distanceFactor={80} 
-      style={{ transition: 'all 0.2s' }}
-    >
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-white/95 backdrop-blur-md border-2 border-slate-200 rounded-xl shadow-2xl pointer-events-none select-none scale-125">
-        <span className={`text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-md text-white shadow-sm ${
-          axis === 'X' ? 'bg-red-500' : axis === 'Y' ? 'bg-green-500' : 'bg-blue-500'
-        }`}>
-          {axis}
-        </span>
-        <span className="text-slate-900 font-black text-[13px] whitespace-nowrap leading-none tracking-tight">
-          {text}mm
-        </span>
-      </div>
-    </Html>
-  );
-
-  return (
-    <group>
-      <CameraRig size={size} />
-      <mesh ref={meshRef} geometry={geometry} castShadow receiveShadow>
-        <meshStandardMaterial 
-          color={color} 
-          roughness={0.4} 
-          metalness={0.5} 
-          emissive={color}
-          emissiveIntensity={0.05}
-        />
-      </mesh>
-
-      {size.length() > 0 && (
-        <>
-          <Label pos={[size.x / 2 + 10, size.y / 2, 0]} text={size.x.toFixed(1)} axis="X" />
-          <Label pos={[0, size.y + 15, 0]} text={size.y.toFixed(1)} axis="Y" />
-          <Label pos={[0, size.y / 2, size.z / 2 + 10]} text={size.z.toFixed(1)} axis="Z" />
-          
-          <ContactShadows 
-            position={[0, 0, 0]} 
-            opacity={0.6} 
-            scale={Math.max(size.x, size.z) * 3} 
-            blur={2.5} 
-            far={size.y * 2} 
-          />
-        </>
-      )}
-    </group>
-  );
-}
-
-export default function ModelViewer({ geometry, color }: ViewerProps) {
-  if (!geometry) return (
-    <div className="w-full h-full min-h-[550px] flex flex-col items-center justify-center bg-slate-50 rounded-[4rem] border-2 border-dashed border-slate-200 overflow-hidden relative">
-      <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#2563eb_1px,transparent_1px)] [background-size:20px_20px]" />
-      <div className="text-9xl mb-6 opacity-20 animate-pulse">🧊</div>
-      <span className="italic font-black text-slate-300 text-2xl uppercase tracking-[0.2em]">Analiz İçin Model Yükleyin</span>
+const ModelViewer = dynamic(() => import('./ModelViewer'), { 
+  ssr: false, 
+  loading: () => (
+    <div className="w-full h-[550px] bg-slate-100 animate-pulse rounded-[4rem] flex items-center justify-center">
+       <span className="text-slate-400 font-black tracking-widest uppercase text-xs">3D Motoru Hazırlanıyor...</span>
     </div>
-  );
+  )
+});
+
+interface Filament {
+  id: string;
+  material: string;
+  color_name: string;
+  color_hex: string;
+  price_multiplier: number;
+}
+
+interface Stats {
+  weight: number; // STL'den gelen %100 solid ağırlık (gram)
+  x: number;
+  y: number;
+  z: number;
+}
+
+// ... bileşen devamı
+
+export default function Calculator() {
+  const [loading, setLoading] = useState(false);
+  const [dbLoading, setDbLoading] = useState(true);
+  const [geometry, setGeometry] = useState<THREE.BufferGeometry | null>(null);
+  const [fileName, setFileName] = useState<string>("");
+  const [stats, setStats] = useState<Stats | null>(null);
+  
+  const [dbFilaments, setDbFilaments] = useState<Filament[]>([]);
+  
+  const [options, setOptions] = useState({ 
+    material: 'pla', 
+    infill: 20, 
+    resolution: 0.2, 
+    color: '', 
+    colorHex: '#2563eb',
+    multiplier: 1.0 
+  });
+// Malzeme değişimini yöneten yardımcı fonksiyon
+  const handleMaterialChange = (m: string) => {
+    const firstMatch = dbFilaments.find(f => f.material === m);
+    setOptions(prev => ({
+      ...prev,
+      material: m, 
+      color: firstMatch?.color_name || '', 
+      colorHex: firstMatch?.color_hex || '#ccc',
+      multiplier: firstMatch?.price_multiplier || 1.0
+    }));
+  };
+
+// --- VERİTABANI BAĞLANTISI (MEMONEX OPTİMİZE) ---
+useEffect(() => {
+  let isMounted = true; // Memory leak ve state güncelleme hatasını önlemek için
+
+  const fetchFilaments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('filaments')
+        .select('*')
+        .eq('is_active', true)
+        .order('material', { ascending: true }); // Malzemeleri alfabetik sırala
+
+      if (error) throw error;
+
+      if (isMounted && data) {
+        setDbFilaments(data);
+        
+        // Varsayılan olarak PLA, yoksa listedeki ilk filament
+        const defaultFilament = data.find(f => f.material.toLowerCase() === 'pla') || data[0];
+        
+        if (defaultFilament) {
+          setOptions(prev => ({
+            ...prev,
+            material: defaultFilament.material,
+            color: defaultFilament.color_name,
+            colorHex: defaultFilament.color_hex,
+            multiplier: defaultFilament.price_multiplier
+          }));
+        }
+      }
+    } catch (err) {
+      console.error("Memonex Filament Yükleme Hatası:", err);
+    } finally {
+      if (isMounted) setDbLoading(false);
+    }
+  };
+
+  fetchFilaments();
+
+  return () => { isMounted = false; }; // Bileşen kapanırsa işlemi durdur
+}, []);
+
+// --- GELİŞMİŞ HESAPLAMA MOTORU (MEMONEX V5) ---
+const calculatedData = useMemo(() => {
+  if (!stats) return { weight: 0, hours: 0, price: 0 };
+
+  // 1. Gerçekçi Ağırlık Hesabı:
+  // Duvar kalınlığı genelde sabittir (0.8mm - 1.2mm). 
+  // Modelin %15'ini dış yüzey (shell), geri kalan %85'ini dolgu (infill) bazlı hesaplayalım.
+  const infillRatio = options.infill / 100;
+  const shellWeight = stats.weight * 0.15; 
+  const internalWeight = stats.weight * 0.85 * infillRatio;
+  const realWeight = shellWeight + internalWeight;
+
+  // 2. Makine ve Operasyon Parametreleri:
+  const config = {
+    // Malzeme gram fiyatları (Dinamik çarpanla çarpılacak)
+    materialGramPrice: { pla: 0.85, petg: 1.1, abs: 1.35 }, 
+    hourlyRate: 75, // Elektrik, işçilik ve kira amortismanı
+    avgSpeedGramPerHour: 22, // Kobra 2 Plus hızı için optimize (g/saat)
+    minPrice: 45 // Hiçbir parça bu fiyatın altına düşmez (Açılış ücreti)
+  };
+
+  // 3. Süre Hesabı:
+  // 0.1mm çözünürlük katman sayısını ikiye katladığı için süreyi ciddi artırır.
+  const resMult = options.resolution === 0.1 ? 2.2 : 1.0;
+  let estimatedHours = (realWeight / config.avgSpeedGramPerHour) * resMult;
+  
+  // Model çok büyükse (X-Z yayılımı), kafa gezme süresi artar (+%10)
+  if (stats.x > 150 || stats.z > 150) estimatedHours *= 1.1;
+  estimatedHours = Math.max(estimatedHours, 0.4);
+
+  // 4. Fiyat Hesabı:
+  const baseMatPrice = config.materialGramPrice[options.material as keyof typeof config.materialGramPrice] || 0.85;
+  const dynamicMatPrice = baseMatPrice * options.multiplier;
+
+  const materialCost = realWeight * dynamicMatPrice;
+  const laborAndTimeCost = estimatedHours * config.hourlyRate;
+  
+  // Z Risk (Yükseklik riski): Model yükseldikçe sarsıntı ve hata riski artar.
+  // 120mm'den sonra her 50mm'de %15 risk ekler.
+  const zRisk = stats.y > 120 ? 1 + ((stats.y - 120) / 400) : 1;
+
+  let totalPrice = (materialCost + laborAndTimeCost) * zRisk;
+  
+  // Küçük parçalarda dükkanın minimum karlılığını korumak için:
+  totalPrice = Math.max(totalPrice, config.minPrice);
+
+  return {
+    weight: realWeight,
+    hours: estimatedHours,
+    price: Math.ceil(totalPrice)
+  };
+}, [stats, options]);
+
+// --- MODEL DÖNDÜRME (POZİSYON KORUMALI) ---
+const rotateModel = (axis: 'x' | 'y' | 'z') => {
+  if (!geometry || !stats) return;
+
+  // 1. Geometriyi klonla (Orijinal veriyi bozmamak için)
+  const newGeom = geometry.clone();
+  const angle = Math.PI / 2; // 90 derece
+
+  // 2. Eksene göre döndür
+  if (axis === 'x') newGeom.rotateX(angle);
+  if (axis === 'y') newGeom.rotateY(angle);
+  if (axis === 'z') newGeom.rotateZ(angle);
+
+  // 3. Yeni sınırları hesapla
+  newGeom.computeBoundingBox();
+  
+  // 4. Modeli tekrar (0,0,0) merkezine çek
+  // Bu, ModelViewer'daki tabana oturtma mantığının sapmamasını sağlar.
+  newGeom.center();
+
+  const size = new THREE.Vector3();
+  newGeom.boundingBox!.getSize(size);
+
+  // 5. İstatistikleri güncelle 
+  // DİKKAT: weight (ağırlık) sabit kalmalı, sadece boyutlar güncellenmeli.
+  setStats({ 
+    ...stats, 
+    x: size.x, 
+    y: size.y, 
+    z: size.z 
+  });
+
+  // 6. Yeni geometriyi state'e bas
+  setGeometry(newGeom);
+};
+
+// --- STL ANALİZ VE YÜKLEME ---
+const onDrop = useCallback((acceptedFiles: File[]) => {
+  const file = acceptedFiles[0];
+  if (!file) return;
+  
+  // Güvenlik: 50MB üzerindeki dosyaları uyar (tarayıcıyı kitleyebilir)
+  if (file.size > 50 * 1024 * 1024) {
+    alert("Dosya boyutu çok yüksek (Max 50MB). Lütfen optimize edilmiş bir STL yükleyin.");
+    return;
+  }
+
+  setFileName(file.name);
+  setLoading(true);
+  const reader = new FileReader();
+
+  reader.onload = (e) => {
+    try {
+      const loader = new STLLoader();
+      const buffer = e.target?.result as ArrayBuffer;
+      const geom = loader.parse(buffer);
+      
+      // 1. Geometri Hazırlığı
+      geom.computeBoundingBox();
+      geom.center(); // Modelin pivotunu merkeze al
+      
+      const size = new THREE.Vector3();
+      geom.boundingBox!.getSize(size);
+      
+      // 2. Hızlı Hacim Hesabı (Performans Optimizasyonu)
+      let vol = 0;
+      const pos = geom.attributes.position;
+      const v1 = new THREE.Vector3();
+      const v2 = new THREE.Vector3();
+      const v3 = new THREE.Vector3();
+
+      // Döngü içinde her seferinde new Vector3 oluşturmak yerine objeleri reuse ediyoruz (GC dostu)
+      for (let i = 0; i < pos.count; i += 3) {
+        v1.fromBufferAttribute(pos, i);
+        v2.fromBufferAttribute(pos, i + 1);
+        v3.fromBufferAttribute(pos, i + 2);
+        vol += v1.dot(v2.cross(v3)) / 6.0;
+      }
+
+      // 3. İstatistikleri Set Et
+      // Özgül ağırlık: PLA için ~1.24g/cm³, ABS için ~1.04g/cm³. 
+      // Genel bir ortalama olarak 1.25 güvenli bir limandır.
+      const rawVolumeMm3 = Math.abs(vol);
+      const rawWeightGram = (rawVolumeMm3 / 1000) * 1.25;
+
+      setStats({ 
+        weight: rawWeightGram, 
+        x: size.x, 
+        y: size.y, 
+        z: size.z 
+      });
+      
+      setGeometry(geom);
+    } catch (err) { 
+      console.error("Analiz hatası:", err);
+      alert("STL analizi sırasında bir hata oluştu."); 
+    } finally { 
+      setLoading(false); 
+    }
+  };
+  
+  reader.readAsArrayBuffer(file);
+}, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { 'model/stl': ['.stl'] }, multiple: false });
+
+  const currentMaterialColors = useMemo(() => {
+    return dbFilaments.filter(f => f.material === options.material);
+  }, [dbFilaments, options.material]);
 
   return (
-    <div className="w-full h-[550px] md:h-[700px] bg-white rounded-[4rem] overflow-hidden border border-slate-200 shadow-2xl relative">
-      <div className="absolute top-8 left-8 z-10 pointer-events-none">
-        <div className="bg-slate-900/95 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-white flex items-center gap-3 shadow-xl">
-          <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-          Baskı Tablası Simülasyonu
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-12">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
+        
+        {/* SOL: 3D GÖRÜNÜM */}
+        <div className="lg:col-span-7 lg:sticky lg:top-24 order-1">
+          <div className="relative group overflow-hidden rounded-[4rem] bg-slate-100 border border-slate-200 shadow-inner">
+            <ModelViewer geometry={geometry} color={options.colorHex} />
+            
+            {/* Model Dosya Adı Etiketi */}
+            {geometry && fileName && (
+              <div className="absolute bottom-8 left-8 pointer-events-none animate-in fade-in slide-in-from-left-4 duration-500">
+                <div className="bg-slate-900/90 backdrop-blur-xl px-5 py-3 rounded-2xl border border-white/10 shadow-2xl">
+                  <p className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
+                    <span className="text-blue-400">📦</span> {fileName}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Yükleme Overlay */}
+            {loading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-md z-50">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="animate-spin rounded-full h-14 w-14 border-[6px] border-blue-600 border-t-transparent shadow-xl"></div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-700 animate-pulse">Analiz Ediliyor</span>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* ALT PANEL: Ölçüler ve Kontroller */}
+          {geometry && stats && (
+            <div className="mt-8 space-y-4 animate-in fade-in slide-in-from-bottom-6 duration-700">
+
+              {/* 2. SATIR: İşlem Butonları */}
+              <div className="p-4 bg-slate-50 rounded-[2.5rem] border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-inner">
+                <div className="flex gap-2 w-full sm:w-auto">
+                  {(['x', 'y', 'z'] as const).map(axis => (
+                    <button 
+                      key={axis} 
+                      onClick={() => rotateModel(axis)} 
+                      className="flex-1 sm:flex-none px-6 py-4 bg-white border border-slate-200 rounded-2xl font-black text-[10px] uppercase hover:bg-slate-900 hover:text-white transition-all shadow-sm active:scale-95 group"
+                    >
+                      <span className="text-slate-400 group-hover:text-blue-400 mr-1 transition-colors">{axis.toUpperCase()}</span> ÇEVİR
+                    </button>
+                  ))}
+                </div>
+                
+                <button 
+                  onClick={() => { setGeometry(null); setFileName(""); setStats(null); }} 
+                  className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-6 py-3 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all flex items-center gap-2 group"
+                >
+                  <span className="opacity-0 group-hover:opacity-100 transition-opacity">🗑️</span>
+                  MODELİ KALDIR
+                </button>
+              </div>
+              
+              {/* 1. SATIR: Teknik Ölçü Kartları */}
+              <div className="grid grid-cols-3 gap-4">
+                {[
+                  { label: 'GENİŞLİK (X)', val: stats.x, color: 'bg-red-500', shadow: 'shadow-red-200' },
+                  { label: 'YÜKSEKLİK (Y)', val: stats.y, color: 'bg-green-500', shadow: 'shadow-green-200' },
+                  { label: 'DERİNLİK (Z)', val: stats.z, color: 'bg-blue-600', shadow: 'shadow-blue-200' }
+                ].map((item) => (
+                  <div key={item.label} className="bg-white border border-slate-200 p-5 rounded-[2rem] shadow-sm hover:shadow-md transition-all group/card">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className={`w-2 h-2 rounded-full ${item.color} ${item.shadow} shadow-lg`} />
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{item.label}</span>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-black text-slate-900 tracking-tighter group-hover/card:text-blue-600 transition-colors">
+                        {item.val.toFixed(1)}
+                      </span>
+                      <span className="text-xs font-bold text-slate-300 uppercase">mm</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+            </div>
+          )}
+        </div>
+
+        {/* SAĞ: KONTROLLER */}
+        <div className="lg:col-span-5 space-y-6 lg:space-y-8 order-2">
+          {!geometry ? (
+            <div {...getRootProps()} className={`min-h-[400px] lg:h-[550px] border-4 border-dashed rounded-[4rem] flex flex-col items-center justify-center p-8 transition-all cursor-pointer ${isDragActive ? 'border-blue-600 bg-blue-50' : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-blue-400'}`}>
+              <input {...getInputProps()} />
+              <div className="text-7xl mb-6 drop-shadow-lg">☁️</div>
+              <h2 className="text-xl lg:text-3xl font-black uppercase italic tracking-tighter text-slate-900 text-center leading-tight">
+                STL DOSYASINI<br/><span className="text-blue-600 text-4xl lg:text-6xl tracking-normal font-black">YÜKLE</span>
+              </h2>
+              <p className="mt-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Dosyayı buraya sürükleyin veya tıklayın</p>
+            </div>
+          ) : (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
+              <div className="bg-slate-50 p-6 lg:p-10 rounded-[3rem] border border-slate-200 space-y-8 shadow-sm">
+                {/* Malzeme Seçimi - handleMaterialChange (Stok Kontrollü) */}
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">
+                    Üretim Malzemesi
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['pla', 'petg', 'abs'].map(m => {
+                      // Veritabanında bu malzemeye ait aktif bir kayıt var mı?
+                      const isAvailable = dbFilaments.some(f => f.material.toLowerCase() === m);
+                      const isSelected = options.material === m;
+
+                      return (
+                        <button 
+                          key={m} 
+                          disabled={!isAvailable} // Stokta yoksa butonu devre dışı bırak
+                          onClick={() => handleMaterialChange(m)}
+                          className={`
+                            py-4 rounded-2xl font-black text-[10px] uppercase transition-all relative
+                            ${isSelected 
+                              ? 'bg-slate-900 text-white shadow-xl scale-105 z-10' 
+                              : 'bg-white text-slate-400 border border-slate-200 hover:border-slate-400'}
+                            ${!isAvailable ? 'opacity-40 cursor-not-allowed grayscale' : 'cursor-pointer'}
+                          `}
+                        >
+                          {m}
+                          {!isAvailable && (
+                            <span className="absolute -top-1 -right-1 text-[8px] bg-red-500 text-white px-1 rounded-md">
+                              YOK
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Doluluk */}
+                <div>
+                  <div className="flex justify-between text-[10px] font-black uppercase mb-4"><span>İç Doluluk</span> <span className="text-blue-600">%{options.infill}</span></div>
+                  <input type="range" min="10" max="100" step="10" value={options.infill} onChange={e => setOptions({...options, infill: parseInt(e.target.value)})} className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                </div>
+
+                {/* Hassasiyet */}
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4 text-center sm:text-left">Katman Hassasiyeti</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[0.1, 0.2].map(r => (
+                      <button key={r} onClick={() => setOptions({...options, resolution: r})} className={`py-4 rounded-2xl font-black text-[10px] uppercase transition-all ${options.resolution === r ? 'bg-blue-600 text-white shadow-xl scale-105' : 'bg-white text-slate-400 border border-slate-200 hover:border-slate-400'}`}>
+                        {r === 0.1 ? '⭐ Hassas (0.1mm)' : 'Standart (0.2mm)'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Renk (Dinamik) */}
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Renk Seçimi</label>
+                  <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
+                    {currentMaterialColors.map(c => (
+                      <button 
+                        key={c.id} 
+                        title={c.color_name} 
+                        onClick={() => setOptions({
+                          ...options, 
+                          color: c.color_name, 
+                          colorHex: c.color_hex, 
+                          multiplier: c.price_multiplier 
+                        })} 
+                        className={`w-12 h-12 rounded-full border-4 transition-all hover:scale-110 active:scale-90 ${options.color === c.color_name ? 'border-blue-600 shadow-lg scale-110' : 'border-white'}`} 
+                        style={{ backgroundColor: c.color_hex }} 
+                      />
+                    ))}
+                    {!dbLoading && currentMaterialColors.length === 0 && (
+                      <p className="text-[10px] font-bold text-orange-500 uppercase">Bu malzemede aktif stok bulunmuyor.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* FİYAT KARTI (REVİZE EDİLDİ) */}
+              <div className="bg-blue-600 p-8 lg:p-12 rounded-[3.5rem] text-white shadow-[0_35px_60px_-15px_rgba(37,99,235,0.4)] relative overflow-hidden group">
+                <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000" />
+                <div className="relative z-10">
+                  <div className="grid grid-cols-2 gap-4 opacity-80 mb-8 border-b border-white/20 pb-8 text-[10px] font-bold uppercase tracking-widest">
+                    <div className="space-y-1">
+                      <p className="text-blue-200">Tahmini Ağırlık</p>
+                      <p className="text-base text-white">{calculatedData.weight.toFixed(1)} gr</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-blue-200">Tahmini Süre</p>
+                      <p className="text-base text-white">{calculatedData.hours.toFixed(1)} Saat</p>
+                    </div>
+                  </div>
+
+                  <span className="text-[10px] font-black tracking-[0.4em] opacity-60 uppercase block mb-4">Sipariş Bedeli</span>
+                  <div className="text-6xl lg:text-7xl font-black italic tracking-tighter mb-10 leading-none">
+                    {calculatedData.price} <span className="text-2xl not-italic ml-1 text-blue-200">TL</span>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      const message = encodeURIComponent(
+                        `*YENİ 3D BASKI SİPARİŞİ*\n` +
+                        `----------------------------------\n` +
+                        `*Dosya:* ${fileName}\n` +
+                        `*Malzeme:* ${options.material.toUpperCase()}\n` +
+                        `*Renk:* ${options.color} (${options.colorHex})\n` +
+                        `----------------------------------\n` +
+                        `*TEKNİK DETAYLAR*\n` +
+                        `• *Hassasiyet:* ${options.resolution}mm\n` +
+                        `• *İç Doluluk:* %${options.infill}\n` +
+                        `• *Hesaplanan Ağırlık:* ~${calculatedData.weight.toFixed(1)} gr\n` +
+                        `• *Boyutlar (X,Y,Z):* ${stats?.x.toFixed(1)} x ${stats?.y.toFixed(1)} x ${stats?.z.toFixed(1)} mm\n` +
+                        `----------------------------------\n` +
+                        `*TEKLİF TUTARI:* *${calculatedData.price} TL*\n` +
+                        `----------------------------------\n` +
+                        `_Memonex3D Analiz Motoru ile oluşturulmuştur._`
+                      );
+                      window.open(`https://wa.me/905312084897?text=${message}`, '_blank');
+                    }} 
+                    className="w-full bg-slate-900 text-white py-6 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-white hover:text-blue-600 transition-all active:scale-95 shadow-2xl flex items-center justify-center gap-3"
+                  >
+                    <span>SİPARİŞİ ONAYLA</span>
+                    <span className="text-xl">🚀</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-      
-      <Suspense fallback={null}>
-        <Canvas 
-          shadows 
-          gl={{ 
-            antialias: true, 
-            toneMapping: THREE.ACESFilmicToneMapping,
-            powerPreference: "high-performance" 
-          }}
-        >
-          <color attach="background" args={['#f8fafc']} />
-          <PerspectiveCamera makeDefault fov={35} near={0.1} far={10000} />
-          
-          <Environment preset="city" />
-          <ambientLight intensity={0.6} />
-          <spotLight position={[500, 500, 500]} angle={0.15} penumbra={1} intensity={1.5} castShadow />
-          <pointLight position={[-500, 200, -500]} intensity={0.5} />
-
-          <ModelManager geometry={geometry} color={color} />
-          
-          <Grid 
-            position={[0, 0, 0]} 
-            args={[500, 500]} 
-            cellSize={10} 
-            cellColor="#cbd5e1" 
-            sectionSize={100} 
-            sectionColor="#3b82f6" 
-            fadeDistance={1000} 
-            infiniteGrid
-          />
-
-          <OrbitControls 
-            makeDefault 
-            minPolarAngle={0} 
-            maxPolarAngle={Math.PI / 2}
-            enableDamping={true}
-          />
-        </Canvas>
-      </Suspense>
     </div>
   );
 }
