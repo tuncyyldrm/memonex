@@ -269,6 +269,16 @@ const onDrop = useCallback((acceptedFiles: File[]) => {
     return dbFilaments.filter(f => f.material === options.material);
   }, [dbFilaments, options.material]);
 
+
+  const formatDuration = (hours: number) => {
+  const h = Math.floor(hours);
+  const m = Math.round((hours - h) * 60);
+  
+  if (h === 0) return `${m} Dakika`;
+  if (m === 0) return `${h} Saat`;
+  return `${h} Saat ${m} Dakika`;
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-12">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
@@ -457,7 +467,7 @@ const onDrop = useCallback((acceptedFiles: File[]) => {
                     </div>
                     <div className="space-y-1">
                       <p className="text-blue-200">Tahmini Süre</p>
-                      <p className="text-base text-white">{calculatedData.hours.toFixed(1)} Saat</p>
+                      <p className="text-base text-white">{formatDuration(calculatedData.hours)}</p>
                     </div>
                   </div>
 
