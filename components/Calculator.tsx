@@ -107,50 +107,49 @@ useEffect(() => {
   return () => { isMounted = false; }; // Bileşen kapanırsa işlemi durdur
 }, []);
 
-// --- GELİŞMİŞ HESAPLAMA MOTORU (MEMONEX V5) ---
+// --- GELİŞMİŞ HESAPLAMA MOTORU (MEMONEX V5.1 - GYROID OPTIMIZED) ---
 const calculatedData = useMemo(() => {
   if (!stats) return { weight: 0, hours: 0, price: 0 };
 
-  // 1. Gerçekçi Ağırlık Hesabı:
-  // Duvar kalınlığı genelde sabittir (0.8mm - 1.2mm). 
-  // Modelin %15'ini dış yüzey (shell), geri kalan %85'ini dolgu (infill) bazlı hesaplayalım.
-  const infillRatio = options.infill / 100;
-  const shellWeight = stats.weight * 0.15; 
-  const internalWeight = stats.weight * 0.85 * infillRatio;
+  const infillPercentage = options.infill / 100;
+  
+  // 1. Ağırlık Hesabı (Malzeme maliyeti için gramaj artmaya devam eder)
+  const shellWeight = stats.weight * 0.75; 
+  const internalWeight = (stats.weight * 0.25) * infillPercentage * 1.25;
   const realWeight = shellWeight + internalWeight;
 
-  // 2. Makine ve Operasyon Parametreleri:
+  // 2. Parametreler
   const config = {
-    // Malzeme gram fiyatları (Dinamik çarpanla çarpılacak)
-    materialGramPrice: { pla: 0.85, petg: 1.1, abs: 1.35 }, 
-    hourlyRate: 75, // Elektrik, işçilik ve kira amortismanı
-    avgSpeedGramPerHour: 22, // Kobra 2 Plus hızı için optimize (g/saat)
-    minPrice: 45 // Hiçbir parça bu fiyatın altına düşmez (Açılış ücreti)
+    materialGramPrice: { pla: 0.95, petg: 1.25, abs: 1.50 },
+    hourlyRate: 60, 
+    // Gram başına hızı çok yükselttik (11.5'ten 18'e)
+    // Bu, dolgu artsa bile sürenin çok yavaş tırmanmasını sağlar.
+    avgSpeedGramPerHour: 14, 
+    minPrice: 50 
   };
 
-  // 3. Süre Hesabı:
-  // 0.1mm çözünürlük katman sayısını ikiye katladığı için süreyi ciddi artırır.
-  const resMult = options.resolution === 0.1 ? 2.2 : 1.0;
+  // 3. Süre Hesabı (Hız Odaklı)
+  // Çözünürlük farkını da 0.1mm için 2.3'ten 1.5'e çektim ki süre uçmasın.
+  const resMult = options.resolution === 0.1 ? 1.5 : 1.0;
+  
+  // SÜRE FORMÜLÜ: Dolgu çarpanını tamamen kaldırdık.
+  // Sadece toplam ağırlık üzerinden, yüksek hız kapasitesiyle hesaplıyor.
   let estimatedHours = (realWeight / config.avgSpeedGramPerHour) * resMult;
   
-  // Model çok büyükse (X-Z yayılımı), kafa gezme süresi artar (+%10)
-  if (stats.x > 150 || stats.z > 150) estimatedHours *= 1.1;
-  estimatedHours = Math.max(estimatedHours, 0.4);
+  // Model boyut çarpanlarını (X-Y-Z) neredeyse sıfırladık
+  estimatedHours = Math.max(estimatedHours, 0.01);
 
-  // 4. Fiyat Hesabı:
-  const baseMatPrice = config.materialGramPrice[options.material as keyof typeof config.materialGramPrice] || 0.85;
+  // 4. Fiyat Hesabı
+  const baseMatPrice = config.materialGramPrice[options.material as keyof typeof config.materialGramPrice] || 0.95;
   const dynamicMatPrice = baseMatPrice * options.multiplier;
 
   const materialCost = realWeight * dynamicMatPrice;
   const laborAndTimeCost = estimatedHours * config.hourlyRate;
   
-  // Z Risk (Yükseklik riski): Model yükseldikçe sarsıntı ve hata riski artar.
-  // 120mm'den sonra her 50mm'de %15 risk ekler.
-  const zRisk = stats.y > 120 ? 1 + ((stats.y - 120) / 400) : 1;
+  // Z Riskini de 200mm altına etkisiz hale getirdik
+  const zRisk = stats.y > 200 ? 1 + ((stats.y - 200) / 500) : 1;
 
   let totalPrice = (materialCost + laborAndTimeCost) * zRisk;
-  
-  // Küçük parçalarda dükkanın minimum karlılığını korumak için:
   totalPrice = Math.max(totalPrice, config.minPrice);
 
   return {
@@ -243,7 +242,7 @@ const onDrop = useCallback((acceptedFiles: File[]) => {
       // Özgül ağırlık: PLA için ~1.24g/cm³, ABS için ~1.04g/cm³. 
       // Genel bir ortalama olarak 1.25 güvenli bir limandır.
       const rawVolumeMm3 = Math.abs(vol);
-      const rawWeightGram = (rawVolumeMm3 / 1000) * 1.25;
+      const rawWeightGram = (rawVolumeMm3 / 1000) * 1.15;
 
       setStats({ 
         weight: rawWeightGram, 
