@@ -10,7 +10,7 @@ import {
   GizmoHelper, 
   GizmoViewport 
 } from '@react-three/drei';
-import { Suspense, useRef, useState, useEffect } from 'react';
+import { Suspense, useRef, useState, useEffect, useTransition } from 'react';
 import * as THREE from 'three';
 
 // --- TYPESCRIPT TANIMLAMALARI ---
@@ -101,6 +101,7 @@ function ModelManager({ geometry, color }: { geometry: THREE.BufferGeometry, col
 }
 
 export default function ModelViewer({ geometry, color }: ViewerProps) {
+  const [isPending, startTransition] = useTransition();
   if (!geometry) return (
     <div className="w-full h-[550px] flex flex-col items-center justify-center bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 relative overflow-hidden group">
       <div className="absolute inset-0 opacity-[0.05] bg-[radial-gradient(#334155_1px,transparent_1px)] bg-[size:20px_20px]" />
@@ -110,7 +111,7 @@ export default function ModelViewer({ geometry, color }: ViewerProps) {
   );
 
   return (
-    <div className="w-full h-[550px] bg-[#f8fafc] rounded-[3rem] overflow-hidden border border-slate-200 shadow-xl relative group">
+    <div className="w-full h-[550px] bg-[#f8fafc] rounded-[3rem] overflow-hidden border border-slate-200 shadow-xl relative group touch-none">
       {/* Teknik Bilgi Overlay */}
       <div className="absolute top-6 left-6 z-10">
         <div className="bg-white/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-slate-200 shadow-sm transition-all group-hover:translate-x-1">
@@ -128,11 +129,17 @@ export default function ModelViewer({ geometry, color }: ViewerProps) {
       }>
         <Canvas 
           shadows 
+          // 2. frameloop="demand" -> EN KRİTİK AYAR. 
+          // Model sadece fareyle hareket ettirildiğinde render edilir. 
+          // Boştayken donma/ısınma yapmaz.
+          frameloop="demand" 
           gl={{ 
-            antialias: true,
-            toneMapping: THREE.ACESFilmicToneMapping, // Açık temada daha zengin renkler
-            powerPreference: "high-performance" 
+            antialias: false, // Performans için false yapıp dpr artırmak daha mantıklı
+            powerPreference: "high-performance",
+            stencil: false,
+            depth: true
           }}
+          dpr={[1, 2]} // Ekran çözünürlüğüne göre dinamik kalite
         >
           {/* Aydınlık Arka Plan (Soft Gri-Mavi) */}
           <color attach="background" args={['#f1f5f9']} />
@@ -171,6 +178,17 @@ export default function ModelViewer({ geometry, color }: ViewerProps) {
             maxPolarAngle={Math.PI / 2.1} 
             enableDamping 
             dampingFactor={0.08}
+            // --- SCROLL ÇÖZÜMÜ ---
+            enableZoom={true} 
+            // Fare modelin üzerindeyken sayfanın kaymasını engellemek için:
+            onStart={() => {
+              // Zoom veya döndürme başladığında sayfa scroll'unu kilitle
+              document.body.style.overflow = 'hidden';
+            }}
+            onEnd={() => {
+              // İşlem bitince (fare bırakılınca veya durunca) scroll'u geri aç
+              document.body.style.overflow = 'auto';
+            }}
           />
         </Canvas>
       </Suspense>
