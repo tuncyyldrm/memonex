@@ -28,7 +28,7 @@ interface Filament {
 }
 
 interface Stats {
-  weight: number; // STL'den gelen %100 solid ağırlık (gram)
+  volume: number; // weight yerine volume geldi
   x: number;
   y: number;
   z: number;
@@ -108,53 +108,59 @@ useEffect(() => {
 }, []);
 
 // --- GELİŞMİŞ HESAPLAMA MOTORU (MEMONEX V5.1 - GYROID OPTIMIZED) ---
+// --- GELİŞMİŞ HESAPLAMA MOTORU ---
 const calculatedData = useMemo(() => {
-  if (!stats) return { weight: 0, hours: 0, price: 0 };
+  if (!stats) return { weight: 0, hours: 0, price: 0, formattedTime: "" };
 
   const infillPercentage = options.infill / 100;
   
-  // 1. Ağırlık Hesabı (Malzeme maliyeti için gramaj artmaya devam eder)
-  const shellWeight = stats.weight * 0.75; 
-  const internalWeight = (stats.weight * 0.25) * infillPercentage * 1.25;
-  const realWeight = shellWeight + internalWeight;
+  // 1. GERÇEKÇİ AĞIRLIK HESABI
+  // %100 Dolu Ağırlık (PLA Yoğunluğu: 1.24)
+  const fullSolidWeight = (stats.volume / 1000) * 1.24; 
 
-  // 2. Parametreler
+  // Slicer Mantığı: %25 Kabuk (Sabit), Geri kalanı dolguya bağlı
+  const shellWeight = fullSolidWeight * 0.25; 
+  const internalWeight = (fullSolidWeight * 0.75) * infillPercentage;
+  
+  // %15 Destek (Support) Payı (Görseldeki yeşil alanlar için kritik)
+  const realWeight = (shellWeight + internalWeight) * 1.15;
+
+  // 2. KOBRA 2 PLUS PARAMETRELERİ
   const config = {
     materialGramPrice: { pla: 0.95, petg: 1.25, abs: 1.50 },
     hourlyRate: 60, 
-    // Gram başına hızı çok yükselttik (11.5'ten 18'e)
-    // Bu, dolgu artsa bile sürenin çok yavaş tırmanmasını sağlar.
-    avgSpeedGramPerHour: 14, 
+    // Makine hızı: Saatte 40 gram (Kobra 2 Plus için gerçekçi değer)
+    avgSpeedGramPerHour: 40, 
     minPrice: 50 
   };
 
-  // 3. Süre Hesabı (Hız Odaklı)
-  // Çözünürlük farkını da 0.1mm için 2.3'ten 1.5'e çektim ki süre uçmasın.
-  const resMult = options.resolution === 0.1 ? 1.5 : 1.0;
+  // 3. SÜRE HESABI (Yüksek Hız Odaklı)
+  const resMult = options.resolution === 0.1 ? 1.4 : 1.0;
   
-  // SÜRE FORMÜLÜ: Dolgu çarpanını tamamen kaldırdık.
-  // Sadece toplam ağırlık üzerinden, yüksek hız kapasitesiyle hesaplıyor.
+  // Süre artık sadece toplam ağırlığın yüksek hıza bölünmesidir
   let estimatedHours = (realWeight / config.avgSpeedGramPerHour) * resMult;
-  
-  // Model boyut çarpanlarını (X-Y-Z) neredeyse sıfırladık
-  estimatedHours = Math.max(estimatedHours, 0.01);
+  estimatedHours = Math.max(estimatedHours, 0.4); // Min 24 dk (Isınma dahil)
 
-  // 4. Fiyat Hesabı
+  // 4. FİYAT HESABI
   const baseMatPrice = config.materialGramPrice[options.material as keyof typeof config.materialGramPrice] || 0.95;
   const dynamicMatPrice = baseMatPrice * options.multiplier;
 
   const materialCost = realWeight * dynamicMatPrice;
-  const laborAndTimeCost = estimatedHours * config.hourlyRate;
+  const laborCost = estimatedHours * config.hourlyRate;
   
-  // Z Riskini de 200mm altına etkisiz hale getirdik
   const zRisk = stats.y > 200 ? 1 + ((stats.y - 200) / 500) : 1;
-
-  let totalPrice = (materialCost + laborAndTimeCost) * zRisk;
+  let totalPrice = (materialCost + laborCost) * zRisk;
   totalPrice = Math.max(totalPrice, config.minPrice);
+
+  // Formatlı süre (Örn: 1 Saat 30 Dakika)
+  const h = Math.floor(estimatedHours);
+  const m = Math.round((estimatedHours - h) * 60);
+  const formattedTime = h > 0 ? `${h} Saat ${m} Dakika` : `${m} Dakika`;
 
   return {
     weight: realWeight,
     hours: estimatedHours,
+    formattedTime,
     price: Math.ceil(totalPrice)
   };
 }, [stats, options]);
@@ -196,13 +202,13 @@ const rotateModel = (axis: 'x' | 'y' | 'z') => {
 };
 
 // --- STL ANALİZ VE YÜKLEME ---
+// --- STL ANALİZ VE YÜKLEME ---
 const onDrop = useCallback((acceptedFiles: File[]) => {
   const file = acceptedFiles[0];
   if (!file) return;
   
-  // Güvenlik: 50MB üzerindeki dosyaları uyar (tarayıcıyı kitleyebilir)
   if (file.size > 50 * 1024 * 1024) {
-    alert("Dosya boyutu çok yüksek (Max 50MB). Lütfen optimize edilmiş bir STL yükleyin.");
+    alert("Dosya boyutu çok yüksek (Max 50MB).");
     return;
   }
 
@@ -216,21 +222,16 @@ const onDrop = useCallback((acceptedFiles: File[]) => {
       const buffer = e.target?.result as ArrayBuffer;
       const geom = loader.parse(buffer);
       
-      // 1. Geometri Hazırlığı
       geom.computeBoundingBox();
-      geom.center(); // Modelin pivotunu merkeze al
+      geom.center();
       
       const size = new THREE.Vector3();
       geom.boundingBox!.getSize(size);
       
-      // 2. Hızlı Hacim Hesabı (Performans Optimizasyonu)
       let vol = 0;
       const pos = geom.attributes.position;
-      const v1 = new THREE.Vector3();
-      const v2 = new THREE.Vector3();
-      const v3 = new THREE.Vector3();
+      const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), v3 = new THREE.Vector3();
 
-      // Döngü içinde her seferinde new Vector3 oluşturmak yerine objeleri reuse ediyoruz (GC dostu)
       for (let i = 0; i < pos.count; i += 3) {
         v1.fromBufferAttribute(pos, i);
         v2.fromBufferAttribute(pos, i + 1);
@@ -238,14 +239,9 @@ const onDrop = useCallback((acceptedFiles: File[]) => {
         vol += v1.dot(v2.cross(v3)) / 6.0;
       }
 
-      // 3. İstatistikleri Set Et
-      // Özgül ağırlık: PLA için ~1.24g/cm³, ABS için ~1.04g/cm³. 
-      // Genel bir ortalama olarak 1.25 güvenli bir limandır.
-      const rawVolumeMm3 = Math.abs(vol);
-      const rawWeightGram = (rawVolumeMm3 / 1000) * 1.15;
-
+      // Sadece ham hacmi gönder, ağırlık hesabını useMemo'ya bırak
       setStats({ 
-        weight: rawWeightGram, 
+        volume: Math.abs(vol), // mm3 cinsinden hacim
         x: size.x, 
         y: size.y, 
         z: size.z 
@@ -253,13 +249,11 @@ const onDrop = useCallback((acceptedFiles: File[]) => {
       
       setGeometry(geom);
     } catch (err) { 
-      console.error("Analiz hatası:", err);
-      alert("STL analizi sırasında bir hata oluştu."); 
+      alert("STL analizi hatası."); 
     } finally { 
       setLoading(false); 
     }
   };
-  
   reader.readAsArrayBuffer(file);
 }, []);
 
