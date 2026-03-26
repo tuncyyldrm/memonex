@@ -127,22 +127,25 @@ export default function ModelViewer({ geometry, color }: ViewerProps) {
           <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-blue-600" />
         </div>
       }>
-        <Canvas 
-          shadows 
-          // 2. frameloop="demand" -> EN KRİTİK AYAR. 
-          // Model sadece fareyle hareket ettirildiğinde render edilir. 
-          // Boştayken donma/ısınma yapmaz.
-          frameloop="demand" 
-          gl={{ 
-            antialias: false, // Performans için false yapıp dpr artırmak daha mantıklı
-            powerPreference: "high-performance",
-            stencil: false,
-            depth: true
-          }}
-          dpr={[1, 2]} // Ekran çözünürlüğüne göre dinamik kalite
-        >
+          <Canvas 
+            shadows 
+            frameloop="demand" 
+            gl={{ 
+              antialias: false,
+              powerPreference: "high-performance",
+              stencil: false,
+              depth: true
+            }}
+            dpr={[1, 2]}
+            // --- ÇÖZÜM 1: CANVAS SEVİYESİNDE EVENT ENGELLEME ---
+            onCreated={(state) => {
+              const gl = state.gl.domElement;
+              // Fare tekerleği Canvas üzerindeyken sayfanın kaymasını engeller
+              gl.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
+            }}
+          >
           {/* Aydınlık Arka Plan (Soft Gri-Mavi) */}
-          <color attach="background" args={['#f1f5f9']} />
+          <color attach="background" args={['#b5c4d3']} />
           
           <PerspectiveCamera makeDefault fov={38} position={[250, 250, 250]} />
           
@@ -159,10 +162,10 @@ export default function ModelViewer({ geometry, color }: ViewerProps) {
           <Grid 
             args={[600, 600]} 
             cellSize={10} 
-            cellColor="#cbd5e1" 
+            cellColor="#7995b6" 
             cellThickness={0.5}
             sectionSize={50} 
-            sectionColor="#94a3b8" 
+            sectionColor="#556782" 
             sectionThickness={1}
             fadeDistance={800}
             infiniteGrid={false}
@@ -178,17 +181,10 @@ export default function ModelViewer({ geometry, color }: ViewerProps) {
             maxPolarAngle={Math.PI / 2.1} 
             enableDamping 
             dampingFactor={0.08}
-            // --- SCROLL ÇÖZÜMÜ ---
             enableZoom={true} 
-            // Fare modelin üzerindeyken sayfanın kaymasını engellemek için:
-            onStart={() => {
-              // Zoom veya döndürme başladığında sayfa scroll'unu kilitle
-              document.body.style.overflow = 'hidden';
-            }}
-            onEnd={() => {
-              // İşlem bitince (fare bırakılınca veya durunca) scroll'u geri aç
-              document.body.style.overflow = 'auto';
-            }}
+            // --- ÇÖZÜM 2: OVERFLOW HIDDEN'I KALDIRDIK ---
+            // Buradaki onStart ve onEnd fonksiyonlarını tamamen temizledik 
+            // Böylece sağ bar kaybolmayacak ve titreme olmayacak.
           />
         </Canvas>
       </Suspense>
