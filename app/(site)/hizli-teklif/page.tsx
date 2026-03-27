@@ -55,7 +55,7 @@ export default async function QuickQuotePage() {
       
       <div className="max-w-7xl mx-auto px-6">
         {/* --- HEADER (BİRİNCİ SATIR) --- */}
-        <header className="max-w-4xl mb-16">
+        <header className="max-w-4xl mb-4">
           <div className="flex items-center gap-3 mb-6">
             <span className="h-[1px] w-12 bg-blue-600"></span>
             <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.4em]">Endüstriyel Üretim Hattı</span>

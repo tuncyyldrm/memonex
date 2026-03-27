@@ -146,11 +146,11 @@ export default async function ProductDetail({ params }: Props) {
               
               <div className="space-y-0.5">
                 {[
-                  { label: "Baskı Teknolojisi", value: product.technology || "FDM / Industrial" },
-                  { label: "Malzeme Standartı", value: product.material || "PLA+ / PETG" },
-                  { label: "Hassasiyet", value: "0.12mm - 0.20mm" },
-                  { label: "Üretim Konumu", value: s?.workshop_address?.split(',')[0] || "Isparta / Türkiye" }
-                ].map((spec, i) => (
+                    { label: "Baskı Teknolojisi", value: product.technology || s?.default_tech },
+                    { label: "Malzeme Standartı", value: product.material || s?.default_material },
+                    { label: "Hassasiyet", value: product.default_precision || s?.default_precision },
+                    { label: "Üretim Konumu", value: s?.workshop_address?.split(',')[0] || "Isparta / Türkiye" }
+                  ].map((spec, i) => (
                   <div key={i} className="flex justify-between items-center py-2.5 border-b border-slate-100 last:border-0 px-1">
                     <span className="text-[8px] text-slate-400 font-black uppercase tracking-widest">{spec.label}</span>
                     <span className="text-xs md:text-sm text-slate-900 font-black tracking-tight">{spec.value}</span>

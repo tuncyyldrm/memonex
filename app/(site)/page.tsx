@@ -122,8 +122,7 @@ export default async function Home() {
               Kataloğu Keşfet <span className="group-hover:translate-x-1 transition-transform">→</span>
             </Link>
             <a 
-              href={`https://wa.me/${s?.whatsapp_no}?text=${encodeURIComponent(s?.wa_default_msg || 'Merhaba, bir projem var.')}`} 
-              target="_blank" 
+              href={`/hizli-teklif`} 
               className="bg-white text-slate-900 border-2 border-slate-100 px-12 py-6 rounded-2xl font-black text-xs uppercase tracking-widest hover:border-blue-600 transition-all active:scale-95"
             >
               Hızlı Teklif
@@ -264,8 +263,7 @@ export default async function Home() {
           </h2>
 
           <a 
-            href={`https://wa.me/${s?.whatsapp_no}`} 
-            target="_blank" 
+            href={`/hizli-teklif`} 
             rel="noopener noreferrer"
             className="relative inline-block bg-slate-900 text-white px-16 py-8 rounded-[2rem] font-black text-xs uppercase tracking-[0.3em] hover:bg-white hover:text-blue-600 transition-all shadow-2xl active:scale-95"
           >

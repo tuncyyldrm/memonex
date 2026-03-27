@@ -278,7 +278,7 @@ const onDrop = useCallback((acceptedFiles: File[]) => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
         
         {/* SOL: 3D GÖRÜNÜM */}
-        <div className="lg:col-span-7 lg:sticky lg:top-24 order-1">
+        <div className="lg:col-span-8 lg:sticky lg:top-24 order-1">
           <div className="relative group overflow-hidden rounded-[4rem] bg-slate-100 border border-slate-200 shadow-inner">
             <ModelViewer geometry={geometry} color={options.colorHex} />
             
@@ -358,7 +358,7 @@ const onDrop = useCallback((acceptedFiles: File[]) => {
         </div>
 
         {/* SAĞ: KONTROLLER */}
-        <div className="lg:col-span-5 space-y-6 lg:space-y-8 order-2">
+        <div className="lg:col-span-4 space-y-6 lg:space-y-8 order-2">
           {!geometry ? (
             <div {...getRootProps()} className={`min-h-[400px] lg:h-[550px] border-4 border-dashed rounded-[4rem] flex flex-col items-center justify-center p-8 transition-all cursor-pointer ${isDragActive ? 'border-blue-600 bg-blue-50' : 'border-slate-200 bg-slate-50 hover:bg-white hover:border-blue-400'}`}>
               <input {...getInputProps()} />
