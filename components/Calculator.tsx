@@ -108,63 +108,64 @@ useEffect(() => {
 }, []);
 
 // --- GELİŞMİŞ HESAPLAMA MOTORU (MEMONEX V5.1 - GYROID OPTIMIZED) ---
-// --- GELİŞMİŞ HESAPLAMA MOTORU ---
 const calculatedData = useMemo(() => {
   if (!stats) return { weight: 0, hours: 0, price: 0, formattedTime: "" };
 
   const infillPercentage = options.infill / 100;
-  
-  // 1. GERÇEKÇİ AĞIRLIK HESABI
-  const density = 1.24; // PLA için g/cm3
+  const density = 1.35; 
   const fullSolidWeight = (stats.volume / 1000) * density; 
 
-  // --- MEMONEX DINAMIK ANALIZ ---
+  // --- MODEL ANALİZİ ---
   const boundingBoxVol = (stats.x * stats.y * stats.z) / 1000;
   const fullness = (stats.volume / 1000) / boundingBoxVol;
   
   // Destek oranı (Mevcut mantık korundu)
-  const dynamicSupportRate = Math.max(0.05, Math.min(0.35, 0.4 - fullness));
+  const dynamicSupportRate = Math.max(0.05, Math.min(0.35, 0.42 - fullness));
 
-  // --- YENİ: DİNAMİK İÇ HACİM DAĞILIMI ---
-  // Model dolgunsa (kutu gibi) iç hacim payı artar, inceyse (motosiklet) çeper baskın olur.
-  // Bu oran 0.10 (ince model) ile 0.70 (dolu model) arasında değişir.
-  const internalRatio = Math.max(0.10, Math.min(0.70, fullness * 1.5));
+  // --- GRAMAJ DENGESİ GÜNCELLEMESİ ---
+  // İç hacim oranını biraz daha daraltıyoruz (%10 ile %55 arası).
+  // Böylece model ne kadar dolu olursa olsun, duvarların (shell) ağırlık payı korunur.
+  const internalRatio = Math.max(0.55, Math.min(0.70, fullness * 1.2)); 
   const shellRatio = 1 - internalRatio;
 
   const shellWeight = fullSolidWeight * shellRatio; 
-  const internalWeight = (fullSolidWeight * internalRatio) * infillPercentage;
+  
+  // DOLULUK ETKİSİ: Infill her zaman lineer artmaz. 
+  // Gyroid gibi desenlerde %100 doluluk bile aslında teorik hacmin tamamını doldurmaz.
+  // Bu yüzden infill etkisini %90 verimlilikle çarpıyoruz.
+  const internalWeight = (fullSolidWeight * internalRatio) * (infillPercentage * 0.95);
   
   const supportWeight = (shellWeight + internalWeight) * dynamicSupportRate;
   const realWeight = shellWeight + internalWeight + supportWeight;
 
-  // 2. KOBRA 2 PLUS PARAMETRELERİ
+  // --- SÜRE KONTROL MEKANİZMASI (MEVCUT KUSURSUZ YAPI) ---
+  const baseSpeed = 20; 
+  const printSpeed = baseSpeed + (infillPercentage * 8); 
+
   const config = {
     materialGramPrice: { pla: 0.95, petg: 1.25, abs: 1.50 },
     hourlyRate: 60, 
-    avgSpeedGramPerHour: 21, 
+    avgSpeedGramPerHour: printSpeed, 
     minPrice: 50 
   };
 
-  // 3. SÜRE HESABI
   const resMult = options.resolution === 0.1 ? 1.85 : 1.0;
-  
-  // Complexity ve doluluk oranına göre seyahat süresi cezası
-  const complexityFactor = 1.1 + (0.0015 * (1 - fullness));  //1.1 + (0.15 * (1 - fullness))
-  const infillPenalty = 1 + (infillPercentage * 0.0012); // Doluluk arttıkça kafa daha çok hareket eder
+  const complexityFactor = 1.05 + (0.10 * (1 - fullness)); 
+  const infillPenalty = 1 + (infillPercentage * 0.05); 
 
   let estimatedHours = (realWeight / config.avgSpeedGramPerHour) * resMult * complexityFactor * infillPenalty;
   
-  const prepTime = 0.16;
+  const prepTime = 0.16; 
   estimatedHours += prepTime;
 
-  // 4. FİYAT HESABI
+  // --- FİYAT VE FORMATLAMA ---
   const baseMatPrice = config.materialGramPrice[options.material as keyof typeof config.materialGramPrice] || 0.95;
   const dynamicMatPrice = baseMatPrice * options.multiplier;
 
   const materialCost = realWeight * dynamicMatPrice;
   const laborCost = estimatedHours * config.hourlyRate;
   
-  const zRisk = stats.y > 150 ? 1 + ((stats.y - 150) / 400) : 1;
+  const zRisk = stats.y > 150 ? 1 + ((stats.y - 150) / 500) : 1;
   let totalPrice = (materialCost + laborCost) * zRisk;
   totalPrice = Math.max(totalPrice, config.minPrice);
 
