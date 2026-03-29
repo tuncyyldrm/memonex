@@ -115,31 +115,47 @@ const calculatedData = useMemo(() => {
   const infillPercentage = options.infill / 100;
   
   // 1. GERÇEKÇİ AĞIRLIK HESABI
-  // %100 Dolu Ağırlık (PLA Yoğunluğu: 1.24)
-  const fullSolidWeight = (stats.volume / 1000) * 1.24; 
+  const density = 1.24; // PLA için g/cm3
+  const fullSolidWeight = (stats.volume / 1000) * density; 
 
-  // Slicer Mantığı: %25 Kabuk (Sabit), Geri kalanı dolguya bağlı
-  const shellWeight = fullSolidWeight * 0.25; 
-  const internalWeight = (fullSolidWeight * 0.75) * infillPercentage;
+  // --- MEMONEX DINAMIK ANALIZ ---
+  const boundingBoxVol = (stats.x * stats.y * stats.z) / 1000;
+  const fullness = (stats.volume / 1000) / boundingBoxVol;
   
-  // %15 Destek (Support) Payı (Görseldeki yeşil alanlar için kritik)
-  const realWeight = (shellWeight + internalWeight) * 1.15;
+  // Destek oranı (Mevcut mantık korundu)
+  const dynamicSupportRate = Math.max(0.05, Math.min(0.35, 0.4 - fullness));
+
+  // --- YENİ: DİNAMİK İÇ HACİM DAĞILIMI ---
+  // Model dolgunsa (kutu gibi) iç hacim payı artar, inceyse (motosiklet) çeper baskın olur.
+  // Bu oran 0.10 (ince model) ile 0.70 (dolu model) arasında değişir.
+  const internalRatio = Math.max(0.10, Math.min(0.70, fullness * 1.5));
+  const shellRatio = 1 - internalRatio;
+
+  const shellWeight = fullSolidWeight * shellRatio; 
+  const internalWeight = (fullSolidWeight * internalRatio) * infillPercentage;
+  
+  const supportWeight = (shellWeight + internalWeight) * dynamicSupportRate;
+  const realWeight = shellWeight + internalWeight + supportWeight;
 
   // 2. KOBRA 2 PLUS PARAMETRELERİ
   const config = {
     materialGramPrice: { pla: 0.95, petg: 1.25, abs: 1.50 },
     hourlyRate: 60, 
-    // Makine hızı: Saatte 40 gram (Kobra 2 Plus için gerçekçi değer)
-    avgSpeedGramPerHour: 40, 
+    avgSpeedGramPerHour: 21, 
     minPrice: 50 
   };
 
-  // 3. SÜRE HESABI (Yüksek Hız Odaklı)
-  const resMult = options.resolution === 0.1 ? 1.4 : 1.0;
+  // 3. SÜRE HESABI
+  const resMult = options.resolution === 0.1 ? 1.85 : 1.0;
   
-  // Süre artık sadece toplam ağırlığın yüksek hıza bölünmesidir
-  let estimatedHours = (realWeight / config.avgSpeedGramPerHour) * resMult;
-  estimatedHours = Math.max(estimatedHours, 0.4); // Min 24 dk (Isınma dahil)
+  // Complexity ve doluluk oranına göre seyahat süresi cezası
+  const complexityFactor = 1.1 + (0.0015 * (1 - fullness));  //1.1 + (0.15 * (1 - fullness))
+  const infillPenalty = 1 + (infillPercentage * 0.0012); // Doluluk arttıkça kafa daha çok hareket eder
+
+  let estimatedHours = (realWeight / config.avgSpeedGramPerHour) * resMult * complexityFactor * infillPenalty;
+  
+  const prepTime = 0.16;
+  estimatedHours += prepTime;
 
   // 4. FİYAT HESABI
   const baseMatPrice = config.materialGramPrice[options.material as keyof typeof config.materialGramPrice] || 0.95;
@@ -148,11 +164,10 @@ const calculatedData = useMemo(() => {
   const materialCost = realWeight * dynamicMatPrice;
   const laborCost = estimatedHours * config.hourlyRate;
   
-  const zRisk = stats.y > 200 ? 1 + ((stats.y - 200) / 500) : 1;
+  const zRisk = stats.y > 150 ? 1 + ((stats.y - 150) / 400) : 1;
   let totalPrice = (materialCost + laborCost) * zRisk;
   totalPrice = Math.max(totalPrice, config.minPrice);
 
-  // Formatlı süre (Örn: 1 Saat 30 Dakika)
   const h = Math.floor(estimatedHours);
   const m = Math.round((estimatedHours - h) * 60);
   const formattedTime = h > 0 ? `${h} Saat ${m} Dakika` : `${m} Dakika`;
@@ -201,7 +216,6 @@ const rotateModel = (axis: 'x' | 'y' | 'z') => {
   setGeometry(newGeom);
 };
 
-// --- STL ANALİZ VE YÜKLEME ---
 // --- STL ANALİZ VE YÜKLEME ---
 const onDrop = useCallback((acceptedFiles: File[]) => {
   const file = acceptedFiles[0];
