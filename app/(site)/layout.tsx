@@ -130,7 +130,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
 
               {/* Navigasyon */}
               <nav className="space-y-8" aria-label="Footer Navigasyon">
-                <h4 className="font-black text-[10px] uppercase tracking-[0.4em] text-slate-900">Navigasyon</h4>
+                <h4 className="block font-black text-[10px] uppercase tracking-[0.4em] text-slate-900">Navigasyon</h4>
                 <ul className="space-y-5">
                   {navLinks.map((link) => (
                     <li key={link.name}>
@@ -147,7 +147,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
 
               {/* Atölye ve İletişim Bilgileri */}
               <div className="space-y-8">
-                <h4 className="font-black text-[10px] uppercase tracking-[0.4em] text-slate-900">Atölye</h4>
+                <h4 className="block font-black text-[10px] uppercase tracking-[0.4em] text-slate-900">Atölye</h4>
                 <address className="not-italic text-slate-500 text-xs font-bold leading-loose uppercase tracking-tighter">
                   {s?.workshop_address || "Isparta, Türkiye"}<br />
                   <a href={`mailto:${s?.contact_email}`} className="text-blue-600 lowercase font-medium italic underline underline-offset-4 hover:text-slate-900 transition-colors">

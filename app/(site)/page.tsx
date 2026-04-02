@@ -132,7 +132,7 @@ export default async function Home() {
             <span className="text-blue-600 italic block md:inline ml-0 md:ml-4">{s?.hero_title_lower || brandSuffix}</span>
           </h1>
 
-          <p className="text-xl md:text-2xl text-slate-500 font-medium leading-relaxed mb-14 max-w-2xl mx-auto italic opacity-90">
+          <p className="text-xl md:text-2xl text-slate-700 font-medium leading-relaxed mb-14 max-w-2xl mx-auto italic opacity-90">
             &quot;{s?.brand_slogan || "Fikirlerinizi milimetrik hassasiyetle somut gerçekliğe dönüştüren yüksek teknoloji üretim merkezi."}&quot;
           </p>
 
@@ -161,7 +161,7 @@ export default async function Home() {
               Endüstriyel parçalardan sanatsal modellere kadar geniş üretim yelpazemiz.
             </p>
           </div>
-          <Link href="/products" className="text-slate-400 font-black text-[10px] uppercase tracking-[0.4em] hover:text-blue-600 transition-all flex items-center gap-4 group">
+          <Link href="/products" className="text-slate-600 font-black text-[10px] uppercase tracking-[0.4em] hover:text-blue-600 transition-all flex items-center gap-4 group">
             TÜMÜNÜ GÖR <span className="w-12 h-[2px] bg-slate-200 group-hover:bg-blue-600 group-hover:w-20 transition-all"></span>
           </Link>
         </div>
@@ -201,7 +201,7 @@ export default async function Home() {
                   
                   <div className="flex items-center justify-between pt-6 border-t border-slate-100">
                     <div className="flex flex-col">
-                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Fiyat</span>
+                      <span className="text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] mb-1">Fiyat</span>
                       <p className="text-slate-900 font-black text-2xl tracking-tighter">
                         {new Intl.NumberFormat('tr-TR').format(product.price)} 
                         <span className="text-blue-600 text-sm italic ml-1">{s?.price_currency || '₺'}</span>
@@ -215,7 +215,7 @@ export default async function Home() {
                 </div>
               </Link>
             )) : (
-            <div className="col-span-full py-20 text-center text-slate-400 font-bold uppercase tracking-widest italic">
+            <div className="col-span-full py-20 text-center text-slate-600 font-bold uppercase tracking-widest italic">
                 {s?.catalog_empty_msg || "Henüz ürün eklenmedi."}
             </div>
           )}
@@ -230,7 +230,7 @@ export default async function Home() {
               <h2 className="text-6xl md:text-8xl font-black tracking-tighter uppercase italic leading-[0.8] mb-6">
                 TEKNİK<br /><span className="text-blue-500">GÜNLÜK</span>
               </h2>
-              <p className="text-slate-400 font-medium max-w-sm text-lg italic opacity-80">
+              <p className="text-slate-600 font-medium max-w-sm text-lg italic opacity-80">
                 Malzeme bilimi ve 3D teknolojilerine dair derinlemesine incelemeler.
               </p>
             </div>
@@ -255,7 +255,7 @@ export default async function Home() {
                     {formatDate(post.created_at)}
                   </span>
                   <h3 className="text-2xl font-bold mb-6 leading-tight uppercase">{post.title}</h3>
-                  <p className="text-slate-400 text-sm line-clamp-3 mb-8 italic opacity-60">
+                  <p className="text-slate-600 text-sm line-clamp-3 mb-8 italic opacity-60">
                     {stripHtml(post.excerpt || post.content).slice(0, 85)}...
                   </p>
                 </div>

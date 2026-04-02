@@ -119,6 +119,7 @@ export default function Navbar({ settings }: NavbarProps) {
           onClick={() => setIsOpen(!isOpen)} 
           className="md:hidden z-[10005] p-2 -mr-2 text-slate-900 rounded-lg active:bg-slate-100 transition-colors"
           aria-expanded={isOpen}
+          aria-label={isOpen ? "Menüyü kapat" : "Menüyü aç"}
         >
           <div className="w-6 h-5 flex flex-col justify-between items-end">
             <span className={`h-0.5 bg-slate-900 transition-all duration-300 origin-right ${isOpen ? 'w-6 -rotate-45 translate-y-[1px]' : 'w-6'}`}></span>
