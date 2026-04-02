@@ -20,17 +20,34 @@ const getCatalogData = cache(async () => {
 export async function generateMetadata(): Promise<Metadata> {
   const { s } = await getCatalogData();
   const brand = `${s?.brand_name || "Memonex"} ${s?.brand_suffix || "3D"}`;
+  const siteUrl = s?.site_url || "https://memonex3d.com";
   
+  // Resim URL'ini tam (absolute) hale getiriyoruz
+  const imageUrl = s?.og_image_products || s?.og_image_default || `${siteUrl}/og-products.jpg`;
+
   return {
     // Sadece sayfa adını yazıyoruz, Layout otomatik olarak " | Brand" ekleyecek.
     title: "Ürün Kataloğu", 
     description: s?.site_description_default || "Profesyonel 3D baskı modelleri ve endüstriyel çözümler.",
-    alternates: { canonical: `${s?.site_url || "https://memonex3d.com"}/products` },
+    alternates: { canonical: `${siteUrl}/products` },
     openGraph: {
       title: `Ürün Kataloğu - ${brand}`,
       description: "Yüksek hassasiyetli 3D baskı çözümlerimizi inceleyin.",
-      url: `${s?.site_url}/products`,
-      images: [{ url: s?.og_image_products || s?.og_image_default || "/og-products.jpg" }],
+      url: `${siteUrl}/products`,
+      images: [{ 
+        url: imageUrl,
+        width: 1200,
+        height: 630,
+        alt: "Ürün Kataloğu"
+      }],
+      type: "website",
+    },
+    // --- TWITTER BURADA DA EKSİKTİ, EKLEDİK ---
+    twitter: {
+      card: "summary_large_image",
+      title: `Ürün Kataloğu - ${brand}`,
+      description: "Yüksek hassasiyetli 3D baskı çözümlerimizi inceleyin.",
+      images: [imageUrl], // Layout'taki resmi ezmesi için şart
     },
   };
 }

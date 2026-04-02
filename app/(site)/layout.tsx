@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { Metadata } from "next";
 
 // 1. MERKEZİ METADATA YÖNETİMİ
+// app/(site)/layout.tsx
 export async function generateMetadata(): Promise<Metadata> {
   const { data: s } = await supabase.from("site_settings").select("*").single();
   const brandName = s?.brand_name || "MEMONEX";
@@ -16,23 +17,25 @@ export async function generateMetadata(): Promise<Metadata> {
   const siteUrl = s?.site_url || "https://memonex3d.com";
   const description = s?.site_description_default || "Yüksek hassasiyetli 3D baskı çözümleri.";
 
+  const ogImageUrl = s?.og_image_default 
+    ? s.og_image_default 
+    : `${siteUrl}/og-default.jpg`;
+
   return {
+    metadataBase: new URL(siteUrl),
     title: {
       default: fullBrand,
       template: s?.site_title_template || `%s | ${fullBrand}`,
     },
     description: description,
-    metadataBase: new URL(siteUrl),
-    alternates: {
-      canonical: "/", // KRİTİK 1: siteUrl yerine "/" yazmak daha güvenlidir.
-    },
+    alternates: { canonical: "/" },
     openGraph: {
       title: fullBrand,
       description: description,
       url: "./",
       siteName: fullBrand,
       images: [{
-        url: s?.og_image_default || "/og-default.jpg",
+        url: ogImageUrl,
         width: 1200,
         height: 630,
         alt: fullBrand
@@ -42,24 +45,19 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: "summary_large_image",
-      title: fullBrand,
-      description: description,
-      images: [s?.og_image_default || "/og-default.jpg"],
+      // Buraya sabit title/description yazmıyoruz ki alt sayfalar ezebilsin
+      images: [ogImageUrl], 
     },
     robots: {
       index: s?.allow_ai_bots ?? true,
       follow: s?.allow_ai_bots ?? true,
-      googleBot: {
-        index: true,
-        follow: true,
-        'max-image-preview': 'large',
-      },
+      googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
     },
     other: {
       "geo.position": `${s?.geo_latitude};${s?.geo_longitude}`,
       "ICBM": `${s?.geo_latitude}, ${s?.geo_longitude}`,
-      "geo.placename": "Isparta", // KRİTİK 2: Split hatasını önlemek için sabitledik.
-      "geo.region": "TR-32", // KRİTİK 3: Isparta için tam bölge kodu.
+      "geo.placename": "Isparta",
+      "geo.region": "TR-32",
       "theme-color": s?.accent_color_hex || "#2563eb",
     }
   };

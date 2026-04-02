@@ -35,13 +35,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const siteUrl = s?.site_url || "https://memonex3d.com";
   const brand = `${s?.brand_name || "Memonex"} ${s?.brand_suffix || "3D"}`;
   
-  // HTML taglerini temizleyerek temiz bir description oluşturuyoruz
   const cleanDescription = page.content
     ? page.content.replace(/<[^>]*>?/gm, '').substring(0, 155).trim()
     : s?.site_description_default;
 
+  // Resim URL'ini mutlak (absolute) hale getiriyoruz
+  const ogImageUrl = s?.og_image_default || `${siteUrl}/og-corporate.jpg`;
+
   return {
-    // Sadece sayfa başlığı; Layout otomatik olarak "Hakkımızda | MEMONEX 3D" yapacak
     title: page.title, 
     description: cleanDescription,
     alternates: { canonical: `${siteUrl}/${slug}` },
@@ -51,10 +52,22 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       url: `${siteUrl}/${slug}`,
       type: 'article',
       siteName: brand,
-      images: [{ url: s?.og_image_default || '/og-corporate.jpg' }],
+      images: [{ 
+        url: ogImageUrl,
+        width: 1200,
+        height: 630,
+        alt: page.title
+      }],
     },
+    // --- BU KISIM EKSİKTİ, EKLEDİK ---
+    twitter: {
+      card: "summary_large_image",
+      title: `${page.title} - ${brand}`,
+      description: cleanDescription,
+      images: [ogImageUrl], // Twitter botu bunu Layout'tan değil buradan okuyacak
+    },
+    // --------------------------------
     robots: {
-      // Yasal sayfaları arama sonuçlarından gizlemek isteyebilirsiniz (Opsiyonel)
       index: !['gizlilik-politikasi', 'cerez-politikasi', 'kullanim-kosullari'].includes(slug),
       follow: true,
     }

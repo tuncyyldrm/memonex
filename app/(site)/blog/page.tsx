@@ -8,21 +8,37 @@ import { Metadata } from "next";
 export async function generateMetadata(): Promise<Metadata> {
   const { data: s } = await supabase.from("site_settings").select("*").single();
   const brand = `${s?.brand_name || "Memonex"} ${s?.brand_suffix || "3D"}`;
+  const siteUrl = s?.site_url || "https://memonex3d.com";
+  const description = s?.site_description_default || "3D baskı teknolojileri, malzeme bilimi ve inovasyon notları.";
+
+  // Resim URL'ini mutlak (absolute) adrese çeviriyoruz
+  const imageUrl = s?.og_image_blog || s?.og_image_default || `${siteUrl}/blog-og.jpg`;
 
   return {
-    // ÖNEMLİ: Sadece "Blog" yazıyoruz. 
-    // Layout'taki template bunu "Blog | MEMONEX 3D" yapacaktır.
+    // Sadece "Blog" yazıyoruz. Layout template bunu "Blog | MEMONEX 3D" yapacaktır.
     title: "Blog", 
-    description: s?.site_description_default || "3D baskı teknolojileri, malzeme bilimi ve inovasyon notları.",
-    alternates: { canonical: `${s?.site_url || "https://memonex3d.com"}/blog` },
+    description: description,
+    alternates: { canonical: `${siteUrl}/blog` },
     openGraph: {
       title: `Teknik Blog - ${brand}`,
-      description: s?.site_description_default,
-      url: `${s?.site_url}/blog`,
-      images: [{ url: s?.og_image_blog || s?.og_image_default || "/blog-og.jpg" }],
+      description: description,
+      url: `${siteUrl}/blog`,
       siteName: brand,
+      images: [{ 
+        url: imageUrl,
+        width: 1200,
+        height: 630,
+        alt: `Blog - ${brand}`
+      }],
       type: "website",
-    }
+    },
+    // --- TWITTER BURADA DA EKSİKTİ, EKLEDİK ---
+    twitter: {
+      card: "summary_large_image",
+      title: `Teknik Blog - ${brand}`,
+      description: description,
+      images: [imageUrl], // Layout'taki resmi ezmesi için dizi içinde tam URL
+    },
   };
 }
 

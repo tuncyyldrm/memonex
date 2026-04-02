@@ -4,21 +4,38 @@ import Calculator from "@/components/Calculator";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { data: s } = await supabase.from("site_settings").select("*").single();
+  const siteUrl = s?.site_url || "https://memonex3d.com";
   const brand = `${s?.brand_name || "Memonex"} ${s?.brand_suffix || "3D"}`;
   
-  const title = `3D Baskı Fiyat Hesaplama & STL Analiz | ${brand}`;
-  const description = `${brand} online fiyat hesaplama aracı. STL dosyalarınızı yükleyin, gramaj ve süre bazlı anında teklif alın. Isparta profesyonel 3D yazıcı hizmetleri.`;
+  const title = "Hızlı Teklif Al";
+  const description = "3D baskı projeleriniz için saniyeler içinde fiyat teklifi alın. Dosyanızı yükleyin, gerisini biz halledelim.";
+  
+  // Resim URL'ini mutlak (absolute) hale getiriyoruz
+  const imageUrl = s?.og_image_default || `${siteUrl}/og-quote.jpg`;
 
   return {
-    title,
-    description,
-    keywords: ["3d baskı fiyat hesaplama", "stl fiyat al", "3d yazıcı maliyet hesaplama", "ısparta 3d baskı", "online stl analiz"],
+    title: title, 
+    description: description,
+    alternates: { canonical: `${siteUrl}/hizli-teklif` },
     openGraph: {
-      title,
-      description,
+      title: `${title} | ${brand}`,
+      description: description,
+      url: `${siteUrl}/hizli-teklif`,
+      siteName: brand,
+      images: [{ 
+        url: imageUrl,
+        width: 1200, 
+        height: 630,
+        alt: title 
+      }],
       type: "website",
-      url: `${s?.site_url}/hizli-teklif`,
-      images: [{ url: s?.og_image_default || "/og-image.jpg", width: 1200, height: 630 }],
+    },
+    // --- TWITTER ÖNİZLEMESİ İÇİN ŞART ---
+    twitter: {
+      card: "summary_large_image",
+      title: `${title} | ${brand}`,
+      description: description,
+      images: [imageUrl], // Dizi formatında tam URL
     },
   };
 }

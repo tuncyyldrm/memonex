@@ -6,25 +6,44 @@ import { Metadata } from "next";
 export const dynamic = 'force-dynamic';
 
 // 1. DİNAMİK METADATA GENERATOR
-// Layout'taki "template" yapısıyla çakışmaması için optimize edildi.
 export async function generateMetadata(): Promise<Metadata> {
   const { data: s } = await supabase.from("site_settings").select("*").single();
   const brand = `${s?.brand_name || "Memonex"} ${s?.brand_suffix || "3D"}`;
+  const siteUrl = s?.site_url || "https://memonex3d.com";
+  const description = s?.site_description_default || "Yüksek hassasiyetli 3D baskı çözümleri.";
+
+  // Resim URL'ini mutlak (absolute) adrese çeviriyoruz
+  const ogImageUrl = s?.og_image_default 
+    ? s.og_image_default 
+    : `${siteUrl}/og-image.jpg`;
 
   return {
-    // Sadece marka ismini döndürüyoruz, Layout bunu template içine yerleştirecek.
+    // Layout template yapısıyla uyumlu olması için sadece brand döndürüyoruz
     title: brand, 
-    description: s?.site_description_default || "Yüksek hassasiyetli 3D baskı çözümleri.",
-    alternates: { canonical: s?.site_url || "https://memonex3d.com" },
+    description: description,
+    alternates: { canonical: siteUrl },
     openGraph: {
       title: brand,
-      description: s?.site_description_default,
-      url: s?.site_url,
+      description: description,
+      url: siteUrl,
       siteName: brand,
-      images: [{ url: s?.og_image_default || "/og-image.jpg" }],
+      images: [{ 
+        url: ogImageUrl,
+        width: 1200,
+        height: 630,
+        alt: brand
+      }],
       locale: "tr_TR",
       type: "website",
     },
+    // --- TWITTER BURADA DA EKSİKTİ, MUTLAKA OLMALI ---
+    twitter: {
+      card: "summary_large_image",
+      title: brand,
+      description: description,
+      images: [ogImageUrl], // Dizi içinde tam URL
+    },
+    // ------------------------------------------------
     robots: {
       index: s?.allow_ai_bots ?? true,
       follow: s?.allow_ai_bots ?? true,

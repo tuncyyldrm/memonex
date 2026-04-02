@@ -24,7 +24,6 @@ const calculateReadTime = (content: string) => {
   return Math.ceil(words / wordsPerMinute);
 };
 
-// 2. METADATA (Layout Template Uyumluluğu)
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const { post, s } = await getPostData(slug);
@@ -32,19 +31,38 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!post) return { title: "Yazı Bulunamadı" };
 
   const siteUrl = s?.site_url || "https://memonex3d.com";
-  
+  const brand = `${s?.brand_name || "Memonex"} ${s?.brand_suffix || "3D"}`;
+  const title = post.title;
+  const description = post.excerpt || post.title;
+
+  // Resim URL'ini güvenli ve tam (absolute) hale getirelim
+  const imageUrl = post.featured_image 
+    ? post.featured_image 
+    : (s?.og_image_blog || s?.og_image_default || `${siteUrl}/og-default.jpg`);
+
   return {
-    // Sadece başlık; Layout bunu "Başlık | MEMONEX 3D" yapacak.
-    title: post.title, 
-    description: post.excerpt || post.title,
+    title: title, 
+    description: description,
     alternates: { canonical: `${siteUrl}/blog/${slug}` },
     openGraph: {
-      title: post.title,
-      description: post.excerpt || post.title,
+      title: `${title} | ${brand}`, // Başlığı tam verelim
+      description: description,
       url: `${siteUrl}/blog/${slug}`,
-      images: post.featured_image ? [{ url: post.featured_image }] : [{ url: s?.og_image_blog || s?.og_image_default || "" }],
+      images: [{ 
+        url: imageUrl,
+        width: 1200,
+        height: 630,
+        alt: title 
+      }],
       type: "article",
       publishedTime: post.created_at,
+    },
+    // --- TWITTER ETİKETLERİNİ BURAYA EKLEDİK ---
+    twitter: {
+      card: "summary_large_image",
+      title: `${title} | ${brand}`,
+      description: description,
+      images: [imageUrl], // Layout'taki resmi ezmesi için şart
     },
   };
 }

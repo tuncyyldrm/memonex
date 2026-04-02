@@ -29,16 +29,36 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const brand = `${s?.brand_name || "Memonex"} ${s?.brand_suffix || "3D"}`;
   const siteUrl = s?.site_url || "https://memonex3d.com";
   
+  const title = product.name;
+  const description = product.description?.slice(0, 160) || s?.site_description_default;
+  
+  // Resim URL'ini tam (absolute) hale getiriyoruz
+  const imageUrl = product.image 
+    ? product.image 
+    : (s?.og_image_default || `${siteUrl}/og-image.jpg`);
+
   return {
-    title: product.name, 
-    description: product.description?.slice(0, 160) || s?.site_description_default,
+    title: title, 
+    description: description,
     alternates: { canonical: `${siteUrl}/products/${slug}` },
     openGraph: {
-      title: `${product.name} - ${brand}`,
-      description: product.description || "",
+      title: `${title} - ${brand}`,
+      description: description,
       url: `${siteUrl}/products/${slug}`,
-      images: [{ url: product.image || s?.og_image_default || "/og-image.jpg" }],
+      images: [{ 
+        url: imageUrl,
+        width: 1200,
+        height: 630,
+        alt: title 
+      }],
       type: "article",
+    },
+    // --- TWITTER'IN LAYOUT'U EZMESİ İÇİN BURASI ŞART ---
+    twitter: {
+      card: "summary_large_image",
+      title: `${title} - ${brand}`,
+      description: description,
+      images: [imageUrl], // Ürün resmini burada da dizi içinde belirtiyoruz
     },
   };
 }
