@@ -73,15 +73,18 @@ export async function saveProduct(id: string, payload: any) {
 export async function savePost(id: string, payload: any) {
   const supabase = await createClient();
   
+  // 'posts' olan yerleri 'blog_posts' olarak düzelttik
   const query = id === 'new' 
-    ? supabase.from('posts').insert([payload])
-    : supabase.from('posts').update(payload).eq('id', id);
+    ? supabase.from('blog_posts').insert([payload])
+    : supabase.from('blog_posts').update(payload).eq('id', id);
 
   const { data, error } = await query;
   
   if (!error) {
     revalidatePath("/blog");
     revalidatePath("/admin/blog");
+    // Eğer ana sayfada blog yazıları görünüyorsa burayı da ekleyebilirsiniz:
+    revalidatePath("/");
   }
   return { data, error };
 }
