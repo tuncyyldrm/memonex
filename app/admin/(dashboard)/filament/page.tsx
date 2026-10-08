@@ -32,14 +32,27 @@ export default function FilamentManager() {
   const initialForm = { material: 'pla', color_name: '', color_hex: '#2563eb', is_active: true, price_multiplier: 1.0 };
   const [formData, setFormData] = useState<Partial<Filament>>(initialForm);
 
-  useEffect(() => { fetchFilaments(); }, []);
-
   const fetchFilaments = async () => {
     setLoading(true);
     const { data, error } = await supabase.from('filaments').select('*').order('created_at', { ascending: false });
     if (!error) setFilaments(data || []);
     setLoading(false);
   };
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadFilaments = async () => {
+      await fetchFilaments();
+      if (isMounted) {
+        setLoading(false);
+      }
+    };
+
+    void loadFilaments();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleSubmit = async () => {
     if (!formData.color_name) return alert("Renk ismi boş olamaz!");

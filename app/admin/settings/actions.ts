@@ -8,9 +8,9 @@ export async function updateSettings(formData: FormData) {
   // 2. Client'ı asenkron olarak oluştur (AWAIT ŞART)
   const supabase = await createClient(); 
 
-  const rawData = Object.fromEntries(formData.entries());
+  const rawData = Object.fromEntries(formData.entries()) as Record<string, FormDataEntryValue | null>;
   
-  const formattedData: any = {
+  const formattedData: Record<string, unknown> = {
     ...rawData,
     shipping_days_min: Number(rawData.shipping_days_min) || 0,
     shipping_days_max: Number(rawData.shipping_days_max) || 0,
@@ -52,7 +52,7 @@ export async function updateSettings(formData: FormData) {
 
 
 // 1. ÜRÜN İŞLEMLERİ
-export async function saveProduct(id: string, payload: any) {
+export async function saveProduct(id: string, payload: Record<string, unknown>) {
   const supabase = await createClient();
   
   const query = id === 'new' 
@@ -70,7 +70,7 @@ export async function saveProduct(id: string, payload: any) {
 }
 
 // 2. BLOG İŞLEMLERİ
-export async function savePost(id: string, payload: any) {
+export async function savePost(id: string, payload: Record<string, unknown>) {
   const supabase = await createClient();
   
   // 'posts' olan yerleri 'blog_posts' olarak düzelttik
@@ -90,7 +90,7 @@ export async function savePost(id: string, payload: any) {
 }
 
 // 3. SABİT SAYFA İŞLEMLERİ (Hakkımızda vb.)
-export async function savePage(id: string, payload: any) {
+export async function savePage(id: string, payload: Record<string, unknown> & { slug?: string }) {
   const supabase = await createClient();
   
   const query = id === 'new' 

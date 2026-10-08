@@ -7,20 +7,39 @@ import dynamic from 'next/dynamic';
 import { slugify } from '@/lib/utils';
 import Link from 'next/link';
 
-// En üstteki import satırını şöyle yap:
-import { saveProduct, savePost, savePage } from '@/app/admin/settings/actions';
+import { savePost } from '@/app/admin/settings/actions';
 
-// ReactQuill Dinamik Import
-const ReactQuill = dynamic(() => import('react-quill-new'), { 
-  ssr: false,
-  loading: () => <div className="h-[500px] bg-slate-50 animate-pulse rounded-[2rem]" />
-});
+type QuillSelection = { index: number };
+type QuillEditorInstance = {
+  getSelection: (silence?: boolean) => QuillSelection | null;
+  insertEmbed: (index: number, type: string, url: string) => void;
+  setSelection: (index: number) => void;
+};
+type QuillEditorRef = { getEditor: () => QuillEditorInstance };
+type ReactQuillProps = {
+  theme: string;
+  value: string;
+  onChange: (value: string) => void;
+  modules: Record<string, unknown>;
+  placeholder: string;
+};
+
+const ReactQuill = dynamic(
+  async () => {
+  const quillModule = await import('react-quill-new');
+  return quillModule.default as unknown as React.ComponentType<ReactQuillProps & { ref?: React.Ref<QuillEditorRef> }>;
+  },
+  {
+    ssr: false,
+    loading: () => <div className="h-[500px] bg-slate-50 animate-pulse rounded-[2rem]" />,
+  }
+);
 import 'react-quill-new/dist/quill.snow.css';
 
 export default function BlogEditor({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id } = use(params);
-  const quillRef = useRef<any>(null);
+  const quillRef = useRef<QuillEditorRef | null>(null);
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -31,7 +50,7 @@ export default function BlogEditor({ params }: { params: Promise<{ id: string }>
   useEffect(() => {
     async function fetchPost() {
       if (id !== 'new') {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('blog_posts')
           .select('*')
           .eq('id', id)
@@ -83,6 +102,7 @@ export default function BlogEditor({ params }: { params: Promise<{ id: string }>
       const quill = quillRef.current?.getEditor();
       if (quill) {
         const range = quill.getSelection(true);
+        if (!range) return;
         quill.insertEmbed(range.index, 'image', data.publicUrl);
         quill.setSelection(range.index + 1);
       }
@@ -182,16 +202,13 @@ export default function BlogEditor({ params }: { params: Promise<{ id: string }>
     .ql-editor h2 { font-weight: 800; color: #0f172a; margin-top: 2rem; }
   `}</style>
   
-{/* @ts-ignore */}
 <ReactQuill
-  {...({
-    ref: quillRef,
-    theme: "snow",
-    value: content,
-    onChange: setContent,
-    modules: modules,
-    placeholder: "İçeriğinizi oluşturun..."
-  } as any)}
+  ref={quillRef}
+  theme="snow"
+  value={content}
+  onChange={setContent}
+  modules={modules}
+  placeholder="İçeriğinizi oluşturun..."
 />
 </div>
       </div>

@@ -109,7 +109,7 @@ export default async function BlogDetail({ params }: { params: Promise<{ slug: s
           <nav className="mb-12">
             <Link href="/blog" className="text-blue-600 font-black text-[10px] uppercase tracking-[0.4em] inline-flex items-center gap-3 group">
               <span className="w-8 h-[1px] bg-blue-600 group-hover:w-14 transition-all" />
-              Blog'a Dön
+              Blog&apos;a Dön
             </Link>
           </nav>
           

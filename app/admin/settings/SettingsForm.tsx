@@ -3,7 +3,12 @@
 import { updateSettings } from "./actions";
 import { useState } from "react";
 
-export default function SettingsForm({ initialData: s }: { initialData: any }) {
+type SettingsRecord = {
+  [key: string]: string | number | boolean | null | undefined;
+  allow_ai_bots?: boolean;
+};
+
+export default function SettingsForm({ initialData: s }: { initialData: SettingsRecord }) {
   const [status, setStatus] = useState<string | null>(null);
 
   async function clientAction(formData: FormData) {
@@ -64,7 +69,7 @@ export default function SettingsForm({ initialData: s }: { initialData: any }) {
               type="checkbox" 
               name="allow_ai_bots" 
               id="allow_ai_bots"
-              defaultChecked={s.allow_ai_bots} 
+              defaultChecked={Boolean(s.allow_ai_bots)} 
               className="w-6 h-6 rounded-lg accent-blue-600 cursor-pointer"
             />
             <label htmlFor="allow_ai_bots" className="text-[10px] font-black uppercase text-blue-600 cursor-pointer select-none">
@@ -79,7 +84,7 @@ export default function SettingsForm({ initialData: s }: { initialData: any }) {
           <Input label="SEO Başlık Taslağı" name="site_title_template" val={s.site_title_template} placeholder="%s | Marka" />
           <div className="sm:col-span-2">
              <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Varsayılan Meta Açıklaması</label>
-             <textarea name="site_description_default" defaultValue={s.site_description_default} className="admin-input-field h-24 resize-none" />
+             <textarea name="site_description_default" defaultValue={String(s.site_description_default ?? "")} className="admin-input-field h-24 resize-none" />
           </div>
         </div>
       </section>
@@ -117,7 +122,7 @@ export default function SettingsForm({ initialData: s }: { initialData: any }) {
           </div>
           <div className="sm:col-span-3">
             <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Varsayılan Teslimat Notu</label>
-            <textarea name="default_delivery_note" defaultValue={s.default_delivery_note} className="admin-input-field h-20 resize-none" />
+            <textarea name="default_delivery_note" defaultValue={String(s.default_delivery_note ?? "")} className="admin-input-field h-20 resize-none" />
           </div>
         </div>
       </section>
@@ -174,14 +179,23 @@ export default function SettingsForm({ initialData: s }: { initialData: any }) {
   );
 }
 
-function Input({ label, name, val, type = "text", placeholder = "" }: any) {
+type InputProps = {
+  label: string;
+  name: string;
+  val: string | number | boolean | null | undefined;
+  type?: string;
+  placeholder?: string;
+};
+
+function Input({ label, name, val, type = "text", placeholder = "" }: InputProps) {
+  const normalizedValue = val === null || val === undefined ? "" : String(val);
   return (
     <div className="flex flex-col gap-2">
       <label className="text-[10px] font-black uppercase text-slate-400 ml-1">{label}</label>
       <input 
         type={type} 
         name={name} 
-        defaultValue={val} 
+        defaultValue={normalizedValue} 
         placeholder={placeholder}
         className="admin-input-field" 
       />

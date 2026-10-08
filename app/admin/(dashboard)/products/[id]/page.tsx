@@ -63,19 +63,19 @@ export default function ProductEditor({ params }: Props) {
 
   // --- GÖRSEL YÜKLEME FONKSİYONLARI ---
 
+  const getErrorMessage = (error: unknown) => error instanceof Error ? error.message : 'Bilinmeyen bir hata oluştu.';
+
   const handleMainImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
     try {
       setLoading(true);
-      // 'media' bucket ismini ve 'products' klasörünü gönderiyoruz
       const url = await uploadImage(file, 'media', 'products');
-      // 71. satırı şu şekilde değiştirerek 'null' ihtimaline karşı boş string garantisi veriyoruz:
       setFormData(prev => ({ ...prev, image: url || '' }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Ana görsel yüklenemedi:", err);
-      alert(`Görsel yüklenemedi: ${err.message || 'Bucket izinlerini kontrol edin.'}`);
+      alert(`Görsel yüklenemedi: ${getErrorMessage(err)}`);
     } finally {
       setLoading(false);
     }
@@ -90,17 +90,15 @@ const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         uploadImage(file, 'media', 'products')
       );
       const results = await Promise.all(uploadPromises);
-      
-      // Sadece null olmayan (başarılı) URL'leri filtrele
       const validUrls = results.filter((url): url is string => url !== null);
       
       setFormData(prev => ({ 
         ...prev, 
         gallery: [...prev.gallery, ...validUrls] 
       }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Galeri yükleme hatası:", err);
-      alert("Bazı görseller yüklenemedi. Lütfen tekrar deneyin.");
+      alert(`Bazı görseller yüklenemedi. Lütfen tekrar deneyin. ${getErrorMessage(err)}`);
     } finally {
       setLoading(false);
     }

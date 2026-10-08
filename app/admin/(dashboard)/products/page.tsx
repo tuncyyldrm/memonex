@@ -23,10 +23,6 @@ export default function AdminProductList() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
   async function fetchProducts() {
     // Veritabanından tüm sütunları çekiyoruz
     const { data, error } = await supabase
@@ -41,6 +37,30 @@ export default function AdminProductList() {
     if (data) setProducts(data);
     setLoading(false);
   }
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadProducts = async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (!isMounted) return;
+      if (error) {
+        console.error("Veri çekme hatası:", error.message);
+      }
+      if (data) setProducts(data);
+      setLoading(false);
+    };
+
+    void loadProducts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
 // SİLME FONKSİYONU - GÜNCELLENDİ ✅
   async function handleDelete(id: string, name: string) {
