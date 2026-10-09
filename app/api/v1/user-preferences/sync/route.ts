@@ -1,12 +1,28 @@
 //app\api\v1\user-preferences\sync\route.ts
 
 import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
 
-const GA_MEASUREMENT_ID = process.env.GA_MEASUREMENT_ID || 'G-JEB7YLM2RV';
 const GA_API_SECRET = process.env.GA_API_SECRET || 'mC0GamSQR5m2VYLSPc0t5Q';
 
 export async function POST(request: Request) {
   try {
+    const { data: settings, error: settingsError } = await supabase
+      .from('site_settings')
+      .select('ga_tracking_id')
+      .single();
+
+    if (settingsError) {
+      console.error('GA settings lookup failed:', settingsError.message);
+      return NextResponse.json({ status: 'error' }, { status: 500 });
+    }
+
+    const measurementId = settings?.ga_tracking_id;
+    if (!measurementId) {
+      console.error('GA measurement ID is not configured in site_settings.');
+      return NextResponse.json({ status: 'error' }, { status: 500 });
+    }
+
     const body = await request.json();
     const { eventName, contextId, viewLabel, uid, sid, screenResolution, language, referrer, ...restParams } = body;
 
@@ -30,7 +46,7 @@ export async function POST(request: Request) {
       if (utmSource) campaignParams['source'] = utmSource;
       if (utmMedium) campaignParams['medium'] = utmMedium;
       if (utmCampaign) campaignParams['campaign'] = utmCampaign;
-    } catch (e) {
+    } catch {
       pagePath = contextId; // URL parse edilemezse fallback
     }
 
@@ -56,8 +72,8 @@ export async function POST(request: Request) {
     };
 
     // Google Analytics API İsteği
-    await fetch(
-      `https://www.google-analytics.com/mp/collect?measurement_id=${GA_MEASUREMENT_ID}&api_secret=${GA_API_SECRET}`,
+    const gaResponse = await fetch(
+      `https://www.google-analytics.com/mp/collect?measurement_id=${encodeURIComponent(measurementId)}&api_secret=${encodeURIComponent(GA_API_SECRET)}`,
       {
         method: 'POST',
         headers: {
@@ -69,9 +85,14 @@ export async function POST(request: Request) {
       }
     );
 
+    if (!gaResponse.ok) {
+      console.error('GA Measurement Protocol Error:', gaResponse.status, await gaResponse.text());
+      return NextResponse.json({ status: 'error' }, { status: 502 });
+    }
+
     return NextResponse.json({ status: 'synced' }, { status: 200 });
   } catch (error) {
     console.error('GA Sync Error:', error);
-    return NextResponse.json({ status: 'idle' }, { status: 200 });
+    return NextResponse.json({ status: 'error' }, { status: 500 });
   }
 }
