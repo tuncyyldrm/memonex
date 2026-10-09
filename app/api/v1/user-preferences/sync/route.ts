@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
-const GA_API_SECRET = process.env.GA_API_SECRET || 'mC0GamSQR5m2VYLSPc0t5Q';
+const GA_API_SECRET = process.env.GA_API_SECRET;
 
 export async function POST(request: Request) {
   try {
@@ -20,6 +20,11 @@ export async function POST(request: Request) {
     const measurementId = settings?.ga_tracking_id;
     if (!measurementId) {
       console.error('GA measurement ID is not configured in site_settings.');
+      return NextResponse.json({ status: 'error' }, { status: 500 });
+    }
+
+    if (!GA_API_SECRET) {
+      console.error('GA_API_SECRET is not configured for this deployment.');
       return NextResponse.json({ status: 'error' }, { status: 500 });
     }
 
