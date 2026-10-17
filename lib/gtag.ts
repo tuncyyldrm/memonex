@@ -3,8 +3,8 @@ export const GA_TRACKING_ID = 'G-CW05QPYXS3';
 
 declare global {
   interface Window {
-    gtag: (...args: any[]) => void;
-    dataLayer: any[];
+    gtag: (...args: unknown[]) => void;
+    dataLayer: unknown[];
   }
 }
 

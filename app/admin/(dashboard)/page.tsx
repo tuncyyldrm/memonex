@@ -1,20 +1,8 @@
-// app/admin/page.tsx
 import Link from "next/link";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase-server";
 
 export default async function AdminDashboard() {
-  // 1. Server-side Supabase Client Kurulumu
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) { return cookieStore.get(name)?.value },
-      },
-    }
-  );
+  const supabase = await createClient();
 
   // 2. Verileri Paralel Çekme (Hız için Promise.all)
   const [blogRes, productRes, messageRes] = await Promise.all([

@@ -64,6 +64,9 @@ export async function saveProduct(id: string, payload: Record<string, unknown>) 
   if (!error) {
     revalidatePath("/");
     revalidatePath("/products");
+    if (typeof payload.slug === 'string') {
+      revalidatePath(`/products/${payload.slug}`);
+    }
     revalidatePath("/admin/products");
   }
   return { data, error };
@@ -82,6 +85,9 @@ export async function savePost(id: string, payload: Record<string, unknown>) {
   
   if (!error) {
     revalidatePath("/blog");
+    if (typeof payload.slug === 'string') {
+      revalidatePath(`/blog/${payload.slug}`);
+    }
     revalidatePath("/admin/blog");
     // Eğer ana sayfada blog yazıları görünüyorsa burayı da ekleyebilirsiniz:
     revalidatePath("/");
@@ -120,8 +126,24 @@ export async function deleteProduct(id: string) {
   if (!error) {
     // Silinen ürünün ana sayfadan ve listeden anında kalkması için
     revalidatePath("/");
+    revalidatePath("/products");
     revalidatePath("/admin/products");
   }
   
+  return { error };
+}
+
+export async function deletePost(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('blog_posts')
+    .delete()
+    .eq('id', id);
+
+  if (!error) {
+    revalidatePath("/blog");
+    revalidatePath("/admin/blog");
+    revalidatePath("/");
+  }
   return { error };
 }

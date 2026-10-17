@@ -4,7 +4,7 @@ import { useState, useEffect, use, useMemo, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { slugify } from '@/lib/utils';
+import { slugify, uploadImage } from '@/lib/utils';
 import Link from 'next/link';
 
 import { savePost } from '@/app/admin/settings/actions';
@@ -77,33 +77,14 @@ export default function BlogEditor({ params }: { params: Promise<{ id: string }>
       const file = input.files?.[0];
       if (!file) return;
 
-      // Dosya ismini temizle (Türkçe karakter fix)
-      const cleanFileName = file.name
-        .toLowerCase()
-        .replace(/[ıİ]/g, 'i')
-        .replace(/[ğĞ]/g, 'g')
-        .replace(/[üÜ]/g, 'u')
-        .replace(/[şŞ]/g, 's')
-        .replace(/[öÖ]/g, 'o')
-        .replace(/[çÇ]/g, 'c')
-        .replace(/[^a-z0-9.]/g, '-')
-        .replace(/-+/g, '-');
-
-      const filePath = `blog/${Date.now()}-${cleanFileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('media') 
-        .upload(filePath, file);
-
-      if (uploadError) return alert('Yükleme hatası: ' + uploadError.message);
-
-      const { data } = supabase.storage.from('media').getPublicUrl(filePath);
+      const publicUrl = await uploadImage(file, 'media', 'blog');
+      if (!publicUrl) return alert('Görsel yüklenirken bir hata oluştu.');
 
       const quill = quillRef.current?.getEditor();
       if (quill) {
         const range = quill.getSelection(true);
         if (!range) return;
-        quill.insertEmbed(range.index, 'image', data.publicUrl);
+        quill.insertEmbed(range.index, 'image', publicUrl);
         quill.setSelection(range.index + 1);
       }
     };

@@ -6,11 +6,19 @@ import GoogleAnalyticsTracker from "@/components/GoogleAnalyticsTracker";
 import { GA_TRACKING_ID } from "@/lib/gtag";
 import { supabase } from "@/lib/supabase";
 import { Metadata } from "next";
+import { cache } from "react";
+
+export const revalidate = 3600;
+
+const getSiteSettings = cache(async () => {
+  const { data } = await supabase.from("site_settings").select("*").single();
+  return data;
+});
 
 // 1. MERKEZİ METADATA YÖNETİMİ
 // app/(site)/layout.tsx
 export async function generateMetadata(): Promise<Metadata> {
-  const { data: s } = await supabase.from("site_settings").select("*").single();
+  const s = await getSiteSettings();
   const brandName = s?.brand_name || "MEMONEX";
   const brandSuffix = s?.brand_suffix || "3D";
   const fullBrand = `${brandName} ${brandSuffix}`;
@@ -64,7 +72,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
-  const { data: s } = await supabase.from("site_settings").select("*").single();
+  const s = await getSiteSettings();
 
   const activeGAId = s?.ga_tracking_id || GA_TRACKING_ID;
   const brandName = s?.brand_name || "MEMONEX";

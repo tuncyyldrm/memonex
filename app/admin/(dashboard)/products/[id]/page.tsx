@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { slugify, uploadImage } from '@/lib/utils';
 import Link from 'next/link';
 
-// En üstteki import satırını şöyle yap:
-import { saveProduct, savePost, savePage, deleteProduct } from '@/app/admin/settings/actions';
+import { saveProduct, deleteProduct } from '@/app/admin/settings/actions';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -32,12 +31,7 @@ export default function ProductEditor({ params }: Props) {
   const [loading, setLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
-  useEffect(() => {
-    if (id !== 'new') fetchProduct();
-    else setIsInitialLoading(false);
-  }, [id]);
-
-  async function fetchProduct() {
+  const fetchProduct = useCallback(async () => {
     try {
       const { data, error } = await supabase.from('products').select('*').eq('id', id).single();
       if (error) throw error;
@@ -59,7 +53,15 @@ export default function ProductEditor({ params }: Props) {
     } finally {
       setIsInitialLoading(false);
     }
-  }
+  }, [id]);
+
+  useEffect(() => {
+    if (id !== 'new') {
+      void fetchProduct();
+    } else {
+      setIsInitialLoading(false);
+    }
+  }, [id, fetchProduct]);
 
   // --- GÖRSEL YÜKLEME FONKSİYONLARI ---
 
@@ -226,6 +228,7 @@ const handleDelete = async () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {formData.gallery.map((url, index) => (
                 <div key={index} className="aspect-square rounded-2xl overflow-hidden relative group border border-slate-100 shadow-sm">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={url} className="w-full h-full object-cover" alt={`Galeri ${index}`} />
                   <button 
                     onClick={() => removeGalleryImage(index)} 
@@ -270,6 +273,7 @@ const handleDelete = async () => {
             <div className="aspect-square rounded-3xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden relative flex items-center justify-center group">
               {formData.image ? (
                 <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={formData.image} className="w-full h-full object-cover" alt="Kapak" />
                   <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer text-white font-black text-xs uppercase tracking-widest">
                     DEĞİŞTİR

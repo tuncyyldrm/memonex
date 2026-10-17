@@ -10,14 +10,15 @@ import {
   GizmoHelper, 
   GizmoViewport 
 } from '@react-three/drei';
-import { Suspense, useRef, useState, useEffect, useTransition } from 'react';
+import { Suspense, useMemo, useEffect } from 'react';
 import * as THREE from 'three';
 
 // --- TYPESCRIPT TANIMLAMALARI ---
+/* eslint-disable @typescript-eslint/no-namespace */
 declare global {
   namespace JSX {
     interface IntrinsicElements extends ThreeElements {
-      color: ThreeElements['color'] & { attach?: string; args?: any[] };
+      color: ThreeElements['color'] & { attach?: string; args?: unknown[] };
       ambientLight: ThreeElements['ambientLight'];
       spotLight: ThreeElements['spotLight'];
       pointLight: ThreeElements['pointLight'];
@@ -27,6 +28,7 @@ declare global {
     }
   }
 }
+/* eslint-enable @typescript-eslint/no-namespace */
 
 interface ViewerProps {
   geometry: THREE.BufferGeometry | null;
@@ -45,8 +47,9 @@ function CameraRig({ size }: { size: THREE.Vector3 }) {
       camera.lookAt(0, size.y / 2, 0);
       
       if (controls) {
-        (controls as any).target.set(0, size.y / 2, 0);
-        (controls as any).update();
+        const orbitControls = controls as unknown as { target: THREE.Vector3; update: () => void };
+        orbitControls.target.set(0, size.y / 2, 0);
+        orbitControls.update();
       }
     }
   }, [size, camera, controls]);
@@ -54,30 +57,24 @@ function CameraRig({ size }: { size: THREE.Vector3 }) {
   return null;
 }
 
-function ModelManager({ geometry, color }: { geometry: THREE.BufferGeometry, color: string }) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const [size, setSize] = useState<THREE.Vector3>(new THREE.Vector3(0, 0, 0));
-
-  useEffect(() => {
-    if (geometry) {
-      geometry.computeBoundingBox();
-      geometry.computeVertexNormals();
-      const boundingBox = geometry.boundingBox!;
-      const newSize = new THREE.Vector3();
+function ModelManager({ geometry, color }: { geometry: THREE.BufferGeometry; color: string }) {
+  const size = useMemo(() => {
+    if (!geometry) return new THREE.Vector3(0, 0, 0);
+    geometry.computeBoundingBox();
+    geometry.computeVertexNormals();
+    const boundingBox = geometry.boundingBox;
+    const newSize = new THREE.Vector3();
+    if (boundingBox) {
       boundingBox.getSize(newSize);
-      setSize(newSize);
-      
-      if (meshRef.current) {
-        meshRef.current.position.y = newSize.y / 2;
-      }
     }
+    return newSize;
   }, [geometry]);
 
   return (
     <group>
       <CameraRig size={size} />
 
-      <mesh ref={meshRef} geometry={geometry} castShadow receiveShadow>
+      <mesh geometry={geometry} position={[0, size.y / 2, 0]} castShadow receiveShadow>
         <meshStandardMaterial 
           color={color} 
           roughness={0.7}       // Işığı dengeli dağıtan mat doku
@@ -101,7 +98,6 @@ function ModelManager({ geometry, color }: { geometry: THREE.BufferGeometry, col
 }
 
 export default function ModelViewer({ geometry, color }: ViewerProps) {
-  const [isPending, startTransition] = useTransition();
   if (!geometry) return (
     <div className="w-full h-[550px] flex flex-col items-center justify-center bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 relative overflow-hidden group">
       <div className="absolute inset-0 opacity-[0.05] bg-[radial-gradient(#334155_1px,transparent_1px)] bg-[size:20px_20px]" />

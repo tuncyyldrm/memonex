@@ -20,7 +20,6 @@ export default function Navbar({ settings }: NavbarProps) {
 
   const brand = settings?.brand_name || "MEMONEX";
   const suffix = settings?.brand_suffix || "3D";
-  const whatsapp = settings?.whatsapp_no || "905312084897";
   const city = settings?.address_city || "Isparta, Türkiye";
 
   // Scroll Takibi

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { createBrowserClient } from "@supabase/ssr"; // SSR uyumlu client
-import { useRouter } from "next/navigation";
 import "@/app/globals.css";
 
 export default function AdminLogin() {
@@ -39,7 +38,7 @@ export default function AdminLogin() {
         // bunu algılaması için tam yönlendirme en güvenli yoldur.
         window.location.href = "/admin";
       }
-    } catch (err) {
+    } catch {
       setError("Beklenmedik bir hata oluştu.");
       setLoading(false);
     }

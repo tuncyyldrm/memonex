@@ -263,7 +263,7 @@ const onDrop = useCallback((acceptedFiles: File[]) => {
       });
       
       setGeometry(geom);
-    } catch (err) { 
+    } catch { 
       alert("STL analizi hatası."); 
     } finally { 
       setLoading(false); 

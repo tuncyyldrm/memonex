@@ -3,8 +3,8 @@
 import React from 'react';
 
 export const metadata = {
-  title: 'Çerez Politikası | EZM OTO',
-  description: 'EZM OTO yedek parça kataloğu web sitesi çerez politikası ve aydınlatma metni.',
+  title: 'Çerez Politikası',
+  description: 'Memonex 3D web sitesi çerez politikası ve aydınlatma metni.',
 };
 
 export default function CookiePolicyPage() {

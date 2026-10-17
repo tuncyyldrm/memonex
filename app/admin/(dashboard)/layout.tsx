@@ -1,7 +1,6 @@
 import Link from "next/link";
 import LogoutButton from "@/app/admin/LogoutButton"; 
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase-server";
 import "@/app/globals.css";
 
 // Menü öğelerini "Sayfa Yönetimi" eklenecek şekilde güncelledik
@@ -10,18 +9,12 @@ const ADMIN_NAV_ITEMS = [
   { label: "Sayfa Yönetimi", href: "/admin/pages", icon: "📄", id: "pages" },
   { label: "Blog Yönetimi", href: "/admin/blog", icon: "📝", id: "blog" },
   { label: "Ürün Kataloğu", href: "/admin/products", icon: "📦", id: "products" },
-  { label: "Filemantler", href: "/admin/filament", icon: "🖼️", id: "filament" },
+  { label: "Filamentler", href: "/admin/filament", icon: "🧵", id: "filament" },
   { label: "Genel Ayarlar", href: "/admin/settings", icon: "⚙️", id: "settings" }, // Yeni eklendi
 ] as const;
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { get(name: string) { return cookieStore.get(name)?.value } } }
-  );
-
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   
   const userMail = user?.email || "";

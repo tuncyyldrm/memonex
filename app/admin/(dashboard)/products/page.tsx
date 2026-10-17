@@ -5,8 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-// En üstteki import satırını şöyle yap:
-import { saveProduct, savePost, savePage, deleteProduct } from '@/app/admin/settings/actions';
+import { deleteProduct } from '@/app/admin/settings/actions';
 
 // 1. Veritabanı sütun isimlerine göre arayüzü güncelledik
 interface Product {
@@ -22,21 +21,6 @@ export default function AdminProductList() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-
-  async function fetchProducts() {
-    // Veritabanından tüm sütunları çekiyoruz
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .order("created_at", { ascending: false });
-    
-    if (error) {
-      console.error("Veri çekme hatası:", error.message);
-    }
-    
-    if (data) setProducts(data);
-    setLoading(false);
-  }
 
   useEffect(() => {
     let isMounted = true;
@@ -128,6 +112,7 @@ export default function AdminProductList() {
                       {/* Geliştirilmiş Görsel Önizleme */}
                       <div className="w-14 h-14 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0 shadow-inner">
                          {product.image ? (
+                           /* eslint-disable-next-line @next/next/no-img-element */
                            <img 
                             src={product.image} 
                             alt={product.name} 

@@ -13,7 +13,7 @@ export default async function AdminSettingsPage() {
   const { data: settings } = await supabase
     .from("site_settings")
     .select("*")
-    .eq("id", "00000000-0000-0000-0000-000000000000")
+    .limit(1)
     .single();
 
   const safeSettings = settings || {};

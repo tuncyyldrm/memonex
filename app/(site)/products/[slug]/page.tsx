@@ -6,6 +6,8 @@ import ShareButton from "@/components/ShareButton";
 import { Metadata } from "next";
 import { cache } from "react";
 
+export const revalidate = 3600; // 1 saatlik ISR
+
 interface Props {
   params: Promise<{ slug: string }>;
 }

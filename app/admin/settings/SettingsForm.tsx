@@ -84,7 +84,7 @@ export default function SettingsForm({ initialData: s }: { initialData: Settings
           <Input label="SEO Başlık Taslağı" name="site_title_template" val={s.site_title_template} placeholder="%s | Marka" />
           <div className="sm:col-span-2">
              <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Varsayılan Meta Açıklaması</label>
-             <textarea name="site_description_default" defaultValue={String(s.site_description_default ?? "")} className="admin-input-field h-24 resize-none" />
+             <textarea name="site_description_default" defaultValue={String(s.site_description_default ?? "")} className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold focus:border-blue-600 focus:bg-white outline-none transition-all h-24 resize-none" />
           </div>
         </div>
       </section>
@@ -169,12 +169,6 @@ export default function SettingsForm({ initialData: s }: { initialData: Settings
             Tüm Ayarları Kaydet
           </button>
       </div>
-
-      <style jsx>{`
-        .admin-input-field {
-          @apply w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold focus:border-blue-600 focus:bg-white outline-none transition-all;
-        }
-      `}</style>
     </form>
   );
 }
@@ -197,7 +191,7 @@ function Input({ label, name, val, type = "text", placeholder = "" }: InputProps
         name={name} 
         defaultValue={normalizedValue} 
         placeholder={placeholder}
-        className="admin-input-field" 
+        className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold focus:border-blue-600 focus:bg-white outline-none transition-all" 
       />
     </div>
   );

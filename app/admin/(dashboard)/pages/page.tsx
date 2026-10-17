@@ -1,17 +1,10 @@
-// app/admin/(dashboard)/pages/page.tsx
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase-server";
 import Link from "next/link";
 
 export default async function AdminPages() {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { get(name: string) { return cookieStore.get(name)?.value } } }
-  );
+  const supabase = await createClient();
 
-  const { data: pages, error } = await supabase
+  const { data: pages } = await supabase
     .from("pages")
     .select("id, title, slug, updated_at, seo_title") // Şemadaki kolonlar
     .order("created_at", { ascending: false });

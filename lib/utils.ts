@@ -88,7 +88,76 @@ export const getFirstImage = (html: string): string | null => {
 };
 
 /**
- * Supabase Storage'a güvenli dosya yüklemesi yapar.
+ * İstemci tarafında görselleri otomatik sıkıştırır ve WebP formatına çevirir.
+ * Bu sayede 5-10 MB'lık ham telefon/kamera fotoğrafları 100-250 KB'a düşer (%95+ tasarruf).
+ */
+export const compressImage = async (
+  file: File,
+  maxWidth: number = 1600,
+  maxHeight: number = 1600,
+  quality: number = 0.82
+): Promise<File> => {
+  if (typeof window === 'undefined') return file;
+  if (!file.type.startsWith('image/') || file.type === 'image/svg+xml' || file.type === 'image/gif') {
+    return file;
+  }
+
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              resolve(file);
+              return;
+            }
+            const cleanBaseName = slugify(file.name.replace(/\.[^/.]+$/, ""));
+            const compressedFile = new File([blob], `${cleanBaseName}.webp`, {
+              type: 'image/webp',
+              lastModified: Date.now(),
+            });
+            // Eğer sıkıştırılmış dosya orijinalinden daha küçükse onu kullan
+            resolve(compressedFile.size < file.size ? compressedFile : file);
+          },
+          'image/webp',
+          quality
+        );
+      };
+      img.onerror = () => resolve(file);
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+};
+
+/**
+ * Supabase Storage'a güvenli ve optimize dosya yüklemesi yapar.
+ * - Otomatik WebP ve boyut optimizasyonu uygular.
+ * - Cache-Control başlığını 1 yıl (31536000 saniye, immutable) olarak ayarlar;
+ *   böylece Supabase Egress tüketimi kökten düşürülür.
  */
 export const uploadImage = async (
   file: File, 
@@ -101,14 +170,15 @@ export const uploadImage = async (
   }
 
   try {
-    const fileExt = file.name.split('.').pop();
-    const cleanBaseName = slugify(file.name.replace(/\.[^/.]+$/, ""));
+    const optimizedFile = await compressImage(file);
+    const fileExt = optimizedFile.name.split('.').pop() || 'webp';
+    const cleanBaseName = slugify(optimizedFile.name.replace(/\.[^/.]+$/, ""));
     const fileName = `${folder}/${Date.now()}-${cleanBaseName}.${fileExt}`;
 
     const { error: uploadError } = await supabase.storage
       .from(bucket)
-      .upload(fileName, file, {
-        cacheControl: '3600',
+      .upload(fileName, optimizedFile, {
+        cacheControl: 'public, max-age=31536000, immutable',
         upsert: false 
       });
 

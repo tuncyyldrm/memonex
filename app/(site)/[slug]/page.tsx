@@ -1,5 +1,4 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase-server";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { cache } from "react";
@@ -10,12 +9,7 @@ export const revalidate = 86400; // 24 saatte bir yenile
 
 // Sayfa verilerini ve site ayarlarını merkezi olarak çekiyoruz
 const getPageData = cache(async (slug: string) => {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { get(name) { return cookieStore.get(name)?.value } } }
-  );
+  const supabase = await createClient();
 
   const [pageRes, settingsRes] = await Promise.all([
     supabase.from("pages").select("*").eq("slug", slug).single(),

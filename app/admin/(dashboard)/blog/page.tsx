@@ -1,16 +1,9 @@
-// app/admin/blog/page.tsx
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase-server";
 import Link from "next/link";
 import { formatDate, getFirstImage } from "@/lib/utils";
 
 export default async function AdminBlogList() {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { get(name: string) { return cookieStore.get(name)?.value } } }
-  );
+  const supabase = await createClient();
 
   const { data: posts } = await supabase
     .from("blog_posts")
@@ -61,6 +54,7 @@ export default async function AdminBlogList() {
                       <td className="p-8 w-32">
                         <div className="w-20 h-14 bg-slate-100 rounded-2xl overflow-hidden border border-slate-100 shadow-inner group-hover:scale-105 transition-transform duration-500">
                           {coverImage ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
                             <img 
                               src={coverImage} 
                               alt="" 

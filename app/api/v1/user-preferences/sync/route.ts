@@ -5,21 +5,36 @@ import { supabase } from '@/lib/supabase';
 
 const GA_API_SECRET = process.env.GA_API_SECRET;
 
-export async function POST(request: Request) {
+let cachedGaId: string | null = null;
+let lastFetchTime = 0;
+const GA_CACHE_TTL = 1000 * 60 * 60; // 1 saat önbellek
+
+async function getMeasurementId(): Promise<string | null> {
+  const now = Date.now();
+  if (cachedGaId && now - lastFetchTime < GA_CACHE_TTL) {
+    return cachedGaId;
+  }
   try {
-    const { data: settings, error: settingsError } = await supabase
+    const { data: settings } = await supabase
       .from('site_settings')
       .select('ga_tracking_id')
       .single();
 
-    if (settingsError) {
-      console.error('GA settings lookup failed:', settingsError.message);
-      return NextResponse.json({ status: 'error' }, { status: 500 });
+    if (settings?.ga_tracking_id) {
+      cachedGaId = settings.ga_tracking_id;
+      lastFetchTime = now;
     }
+  } catch (err) {
+    console.error('GA settings lookup error:', err);
+  }
+  return cachedGaId;
+}
 
-    const measurementId = settings?.ga_tracking_id;
+export async function POST(request: Request) {
+  try {
+    const measurementId = await getMeasurementId();
     if (!measurementId) {
-      console.error('GA measurement ID is not configured in site_settings.');
+      console.error('GA measurement ID is not configured.');
       return NextResponse.json({ status: 'error' }, { status: 500 });
     }
 

@@ -20,7 +20,7 @@ const getOrCreateId = (key: string) => {
   return id;
 };
 
-export const trackCustomEvent = (eventName: string, customParams: Record<string, any> = {}) => {
+export const trackCustomEvent = (eventName: string, customParams: Record<string, unknown> = {}) => {
   if (typeof window === 'undefined') return;
   
   // EĞER KULLANICI REDDETTİYSE API'YE İSTEK ATMA

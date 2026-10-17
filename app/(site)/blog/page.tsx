@@ -4,6 +4,8 @@ import Image from "next/image";
 import { stripHtml, formatDate, getFirstImage } from "@/lib/utils";
 import { Metadata } from "next";
 
+export const revalidate = 3600; // 1 saatlik ISR (Admin işlemlerinde revalidatePath('/blog') ile anında güncellenir)
+
 // 1. DİNAMİK METADATA (Layout Template Uyumluluğu Sağlandı)
 export async function generateMetadata(): Promise<Metadata> {
   const { data: s } = await supabase.from("site_settings").select("*").single();

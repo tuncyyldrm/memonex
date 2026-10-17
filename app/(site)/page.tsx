@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { stripHtml, formatDate } from "@/lib/utils";
 import { Metadata } from "next";
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // 1 saatlik ISR (Admin işlemlerinde revalidatePath('/') ile anında güncellenir)
 
 // 1. DİNAMİK METADATA GENERATOR
 export async function generateMetadata(): Promise<Metadata> {

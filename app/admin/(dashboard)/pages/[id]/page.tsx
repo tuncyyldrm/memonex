@@ -4,8 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-// En üstteki import satırını şöyle yap:
-import { saveProduct, savePost, savePage } from '@/app/admin/settings/actions';
+import { savePage } from '@/app/admin/settings/actions';
 
 export default function EditPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 
 interface GalleryProps {
@@ -11,13 +11,8 @@ interface GalleryProps {
 export default function ProductGallery({ images = [], productName = "3D Baskı Parçası" }: GalleryProps) {
   const safeImages = images?.filter(img => img && typeof img === 'string') || [];
   
-  // State'i direkt ilk resimle başlatmak anlık boşluğu (flicker) önler
-  const [activeImage, setActiveImage] = useState(safeImages[0] || '');
-
-  // Eğer dışarıdan gelen images prop'u değişirse (örn: başka bir ürüne geçiş) update et
-  useEffect(() => {
-    if (safeImages.length > 0) setActiveImage(safeImages[0]);
-  }, [images]);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const activeImage = (selectedImage && safeImages.includes(selectedImage)) ? selectedImage : (safeImages[0] || '');
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
@@ -57,7 +52,7 @@ export default function ProductGallery({ images = [], productName = "3D Baskı P
               role="listitem"
               aria-label={`${productName} görseli ${idx + 1}`}
               aria-current={activeImage === img}
-              onClick={() => setActiveImage(img)}
+              onClick={() => setSelectedImage(img)}
               className={`relative w-24 h-24 flex-shrink-0 rounded-[2rem] overflow-hidden border-2 transition-all duration-300 ${
                 activeImage === img 
                   ? 'border-blue-600 ring-4 ring-blue-50 scale-95' 
