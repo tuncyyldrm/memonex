@@ -194,3 +194,28 @@ export const uploadImage = async (
     return null;
   }
 };
+
+/**
+ * 3D Baskı saatlik ücret, taban fiyat ve teslimat notunu ayrıştırır.
+ */
+export function parseDeliveryAndPricing(raw?: string | null) {
+  const fallback = {
+    hourlyRate: 110,
+    minOrderPrice: 100,
+    deliveryNote: "* Bu model Isparta merkezli atölyemizde üretilmektedir."
+  };
+  if (!raw) return fallback;
+  try {
+    const parsed = JSON.parse(raw);
+    return {
+      hourlyRate: Number(parsed.hourly_rate) || fallback.hourlyRate,
+      minOrderPrice: Number(parsed.min_order_price) || fallback.minOrderPrice,
+      deliveryNote: typeof parsed.delivery_note === 'string' ? parsed.delivery_note : fallback.deliveryNote
+    };
+  } catch {
+    return {
+      ...fallback,
+      deliveryNote: String(raw)
+    };
+  }
+}

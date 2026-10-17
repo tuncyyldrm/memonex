@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import Calculator from "@/components/Calculator";
+import { parseDeliveryAndPricing } from "@/lib/utils";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { data: s } = await supabase.from("site_settings").select("*").single();
@@ -42,6 +43,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function QuickQuotePage() {
   const { data: s } = await supabase.from("site_settings").select("*").single();
+  const pricing = parseDeliveryAndPricing(s?.default_delivery_note);
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -52,7 +54,7 @@ export default async function QuickQuotePage() {
         "name": "3D baskı fiyatı nasıl hesaplanır?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Fiyatlandırma; modelin hacmi (gramaj), baskı süresi, seçilen malzeme türü ve doluluk oranına göre sistemimiz tarafından otomatik hesaplanır."
+          "text": "Modelinizin geometrisi, destek ihtiyacı ve seçilen teknik parametreler (malzeme, doluluk, katman kalınlığı) uzmanlarımız tarafından incelenerek en optimum net fiyat teklifi hızlıca oluşturulur."
         }
       },
       {
@@ -89,7 +91,11 @@ export default async function QuickQuotePage() {
 
         {/* --- CALCULATOR AREA (İKİNCİ SATIR - TAM GENİŞLİK) --- */}
         <main className="w-full mb-20">
-           <Calculator />
+           <Calculator 
+             whatsappNo={s?.whatsapp_no} 
+             hourlyRate={pricing.hourlyRate}
+             minOrderPrice={pricing.minOrderPrice}
+           />
         </main>
 
         {/* --- ÜRETİM PARAMETRELERİ & KURUMSAL (ÜÇÜNCÜ SATIR - ALT ALTA) --- */}

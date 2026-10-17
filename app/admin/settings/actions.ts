@@ -10,8 +10,26 @@ export async function updateSettings(formData: FormData) {
 
   const rawData = Object.fromEntries(formData.entries()) as Record<string, FormDataEntryValue | null>;
   
+  // 3D Baskı Fiyatlandırma Motoru ve Teslimat Notu Paketleme
+  const hourlyRate = Number(rawData.pricing_hourly_rate) || 110;
+  const minOrderPrice = Number(rawData.pricing_min_order) || 100;
+  const deliveryNote = typeof rawData.default_delivery_note === 'string'
+    ? rawData.default_delivery_note
+    : "* Bu model Isparta merkezli atölyemizde üretilmektedir.";
+
+  const packedDelivery = JSON.stringify({
+    hourly_rate: hourlyRate,
+    min_order_price: minOrderPrice,
+    delivery_note: deliveryNote
+  });
+
+  // DB'de doğrudan sütunu olmayan alanları temizliyoruz
+  delete rawData.pricing_hourly_rate;
+  delete rawData.pricing_min_order;
+
   const formattedData: Record<string, unknown> = {
     ...rawData,
+    default_delivery_note: packedDelivery,
     shipping_days_min: Number(rawData.shipping_days_min) || 0,
     shipping_days_max: Number(rawData.shipping_days_max) || 0,
     handling_time_max: Number(rawData.handling_time_max) || 0,
@@ -45,6 +63,7 @@ export async function updateSettings(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
+  revalidatePath("/hizli-teklif");
   
   return { success: true };
 }

@@ -11,7 +11,17 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url, 302); // 302 (Geçici) kullan ki tarayıcı ezberlemesin
   }
 
-  // 2. SUPABASE VE AUTH MANTIĞI
+  const isAuthPage = pathname === '/admin/auth';
+  const isAdminPage = pathname.startsWith('/admin');
+
+  // Ziyaretçi sayfalarında (/, /products, /blog vb.) Supabase Auth sorgusu yapma (Kota koruma)
+  if (!isAdminPage) {
+    return NextResponse.next({
+      request: { headers: request.headers },
+    });
+  }
+
+  // 2. SUPABASE VE AUTH MANTIĞI (Yalnızca /admin rotaları için)
   let response = NextResponse.next({
     request: { headers: request.headers },
   });
@@ -41,10 +51,7 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  const isAuthPage = pathname === '/admin/auth';
-  const isAdminPage = pathname.startsWith('/admin');
-
-  if (!user && isAdminPage && !isAuthPage) {
+  if (!user && !isAuthPage) {
     const redirectUrl = new URL('/admin/auth', request.url);
     return NextResponse.redirect(redirectUrl);
   }

@@ -2,6 +2,7 @@
 
 import { updateSettings } from "./actions";
 import { useState } from "react";
+import { parseDeliveryAndPricing } from "@/lib/utils";
 
 type SettingsRecord = {
   [key: string]: string | number | boolean | null | undefined;
@@ -10,6 +11,7 @@ type SettingsRecord = {
 
 export default function SettingsForm({ initialData: s }: { initialData: SettingsRecord }) {
   const [status, setStatus] = useState<string | null>(null);
+  const pricingConfig = parseDeliveryAndPricing(typeof s.default_delivery_note === 'string' ? s.default_delivery_note : null);
 
   async function clientAction(formData: FormData) {
     // Checkbox yönetimi: FormData içinde gelmezse 'false' olarak set etmeliyiz
@@ -120,9 +122,38 @@ export default function SettingsForm({ initialData: s }: { initialData: Settings
             <Input label="Varsayılan Materyal" name="default_material" val={s.default_material} />
             <Input label="Varsayılan Hassasiyet" name="default_precision" val={s.default_precision} />
           </div>
+          {/* 3D BASKI FİYATLANDIRMA MOTORU */}
+          <div className="sm:col-span-3 bg-blue-50/50 p-6 rounded-3xl border-2 border-blue-100 my-2">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse" />
+              <h4 className="text-xs font-black uppercase tracking-widest text-blue-900">
+                3D Baskı Fiyatlandırma Motoru (Anycubic Kobra 2 Plus)
+              </h4>
+            </div>
+            <p className="text-[11px] text-slate-500 font-medium mb-4 leading-relaxed">
+              Müşteri STL dosyası yüklediğinde sistem modelin baskı süresini hesaplar ve buradaki saatlik satış ücreti ile çarparak net fiyat üretir.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input 
+                label="Baskı Saati Satış Ücreti (TL/saat)" 
+                name="pricing_hourly_rate" 
+                val={pricingConfig.hourlyRate} 
+                type="number" 
+                placeholder="110" 
+              />
+              <Input 
+                label="Minimum Sipariş Taban Tutarı (TL)" 
+                name="pricing_min_order" 
+                val={pricingConfig.minOrderPrice} 
+                type="number" 
+                placeholder="100" 
+              />
+            </div>
+          </div>
+
           <div className="sm:col-span-3">
             <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Varsayılan Teslimat Notu</label>
-            <textarea name="default_delivery_note" defaultValue={String(s.default_delivery_note ?? "")} className="admin-input-field h-20 resize-none" />
+            <textarea name="default_delivery_note" defaultValue={pricingConfig.deliveryNote} className="admin-input-field h-20 resize-none" />
           </div>
         </div>
       </section>

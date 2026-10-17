@@ -39,8 +39,7 @@ export async function POST(request: Request) {
     }
 
     if (!GA_API_SECRET) {
-      console.error('GA_API_SECRET is not configured for this deployment.');
-      return NextResponse.json({ status: 'error' }, { status: 500 });
+      return NextResponse.json({ status: 'skipped', message: 'GA_API_SECRET not configured' }, { status: 200 });
     }
 
     const body = await request.json();

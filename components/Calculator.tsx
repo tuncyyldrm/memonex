@@ -36,7 +36,17 @@ interface Stats {
 
 // ... bileşen devamı
 
-export default function Calculator() {
+interface CalculatorProps {
+  whatsappNo?: string;
+  hourlyRate?: number;
+  minOrderPrice?: number;
+}
+
+export default function Calculator({ 
+  whatsappNo = "905312084897",
+  hourlyRate = 110,
+  minOrderPrice = 100
+}: CalculatorProps) {
   const [loading, setLoading] = useState(false);
   const [dbLoading, setDbLoading] = useState(true);
   const [geometry, setGeometry] = useState<THREE.BufferGeometry | null>(null);
@@ -107,79 +117,58 @@ useEffect(() => {
   return () => { isMounted = false; }; // Bileşen kapanırsa işlemi durdur
 }, []);
 
-// --- GELİŞMİŞ HESAPLAMA MOTORU (MEMONEX V5.1 - GYROID OPTIMIZED) ---
+// --- ANYCUBIC KOBRA 2 PLUS FİYATLANDIRMA VE SÜRE MOTORU ---
 const calculatedData = useMemo(() => {
   if (!stats) return { weight: 0, hours: 0, price: 0, formattedTime: "" };
 
   const infillPercentage = options.infill / 100;
-  const density = 1.35; 
+  const density = 1.25; // Standart PLA yoğunluğu ~1.25 g/cm3
   const fullSolidWeight = (stats.volume / 1000) * density; 
 
-  // --- MODEL ANALİZİ ---
+  // --- MODEL VE DESTEK ANALİZİ ---
   const boundingBoxVol = (stats.x * stats.y * stats.z) / 1000;
-  const fullness = (stats.volume / 1000) / boundingBoxVol;
+  const fullness = boundingBoxVol > 0 ? (stats.volume / 1000) / boundingBoxVol : 0.5;
   
-  // Destek oranı (Mevcut mantık korundu)
-  const dynamicSupportRate = Math.max(0.05, Math.min(0.35, 0.42 - fullness));
+  // Ağaç (tree) destek oranı: Çıkıntı ve doluluğa göre %10 - %30 arası
+  const dynamicSupportRate = Math.max(0.10, Math.min(0.30, 0.35 - (fullness * 0.5)));
 
-  // --- GRAMAJ DENGESİ GÜNCELLEMESİ ---
-  // İç hacim oranını biraz daha daraltıyoruz (%10 ile %55 arası).
-  // Böylece model ne kadar dolu olursa olsun, duvarların (shell) ağırlık payı korunur.
-  const internalRatio = Math.max(0.55, Math.min(0.70, fullness * 1.2)); 
-  const shellRatio = 1 - internalRatio;
+  // Kabuk (duvarlar + alt/üst katmanlar) ve İç Dolgu dengesi
+  const shellRatio = Math.max(0.35, Math.min(0.60, 0.65 - (fullness * 0.3)));
+  const internalRatio = 1 - shellRatio;
 
   const shellWeight = fullSolidWeight * shellRatio; 
-  
-  // DOLULUK ETKİSİ: Infill her zaman lineer artmaz. 
-  // Gyroid gibi desenlerde %100 doluluk bile aslında teorik hacmin tamamını doldurmaz.
-  // Bu yüzden infill etkisini %90 verimlilikle çarpıyoruz.
-  const internalWeight = (fullSolidWeight * internalRatio) * (infillPercentage * 0.95);
-  
+  const internalWeight = (fullSolidWeight * internalRatio) * (infillPercentage * 0.90);
   const supportWeight = (shellWeight + internalWeight) * dynamicSupportRate;
   const realWeight = shellWeight + internalWeight + supportWeight;
 
-  // --- SÜRE KONTROL MEKANİZMASI (MEVCUT KUSURSUZ YAPI) ---
-  const baseSpeed = 20; 
-  const printSpeed = baseSpeed + (infillPercentage * 8); 
+  // --- ANYCUBIC KOBRA 2 PLUS BASKI SÜRESİ HESABI ---
+  // Saatte ortalama 19-24 gr filament bırakımı (akış hızı)
+  const baseSpeed = 19; 
+  const printSpeed = baseSpeed + (infillPercentage * 5); 
 
-  const config = {
-    materialGramPrice: { pla: 0.95, petg: 1.25, abs: 1.50 },
-    hourlyRate: 60, 
-    avgSpeedGramPerHour: printSpeed, 
-    minPrice: 50 
-  };
-
-  const resMult = options.resolution === 0.1 ? 1.85 : 1.0;
-  const complexityFactor = 1.05 + (0.10 * (1 - fullness)); 
-  const infillPenalty = 1 + (infillPercentage * 0.05); 
-
-  let estimatedHours = (realWeight / config.avgSpeedGramPerHour) * resMult * complexityFactor * infillPenalty;
+  // Katman hassasiyeti çarpanı (0.12mm daha yavaş, 0.28mm daha hızlı)
+  const resMult = options.resolution <= 0.12 ? 1.65 : (options.resolution >= 0.28 ? 0.75 : 1.0);
   
-  const prepTime = 0.16; 
-  estimatedHours += prepTime;
+  // Tabla ısıtma, seviyeleme ve hazırlık süresi (0.2 saat = 12 dk)
+  const prepTime = 0.20; 
+  const estimatedHours = (realWeight / printSpeed) * resMult + prepTime;
 
-  // --- FİYAT VE FORMATLAMA ---
-  const baseMatPrice = config.materialGramPrice[options.material as keyof typeof config.materialGramPrice] || 0.95;
-  const dynamicMatPrice = baseMatPrice * options.multiplier;
-
-  const materialCost = realWeight * dynamicMatPrice;
-  const laborCost = estimatedHours * config.hourlyRate;
-  
-  const zRisk = stats.y > 150 ? 1 + ((stats.y - 150) / 500) : 1;
-  let totalPrice = (materialCost + laborCost) * zRisk;
-  totalPrice = Math.max(totalPrice, config.minPrice);
+  // --- NET FİYAT HESAPLAMA (Saatlik Ücret Formülü) ---
+  const materialMult = options.multiplier || 1.0;
+  const rawPrice = estimatedHours * hourlyRate * materialMult;
+  const finalPrice = Math.max(minOrderPrice, Math.ceil(rawPrice));
 
   const h = Math.floor(estimatedHours);
   const m = Math.round((estimatedHours - h) * 60);
-  const formattedTime = h > 0 ? `${h} Saat ${m} Dakika` : `${m} Dakika`;
+  const formattedTime = h > 0 ? (m > 0 ? `${h} Saat ${m} Dk` : `${h} Saat`) : `${m} Dk`;
 
   return {
     weight: realWeight,
     hours: estimatedHours,
     formattedTime,
-    price: Math.ceil(totalPrice)
+    price: finalPrice
   };
-}, [stats, options]);
+}, [stats, options, hourlyRate, minOrderPrice]);
 
 // --- MODEL DÖNDÜRME (POZİSYON KORUMALI) ---
 const rotateModel = (axis: 'x' | 'y' | 'z') => {
@@ -278,15 +267,6 @@ const onDrop = useCallback((acceptedFiles: File[]) => {
     return dbFilaments.filter(f => f.material === options.material);
   }, [dbFilaments, options.material]);
 
-
-  const formatDuration = (hours: number) => {
-  const h = Math.floor(hours);
-  const m = Math.round((hours - h) * 60);
-  
-  if (h === 0) return `${m} Dakika`;
-  if (m === 0) return `${h} Saat`;
-  return `${h} Saat ${m} Dakika`;
-  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-12">
@@ -465,51 +445,73 @@ const onDrop = useCallback((acceptedFiles: File[]) => {
                 </div>
               </div>
 
-              {/* FİYAT KARTI (REVİZE EDİLDİ) */}
-              <div className="bg-blue-600 p-8 lg:p-12 rounded-[3.5rem] text-white shadow-[0_35px_60px_-15px_rgba(37,99,235,0.4)] relative overflow-hidden group">
-                <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000" />
+              {/* FİYAT & SİPARİŞ KARTI */}
+              <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-slate-900 p-8 lg:p-12 rounded-[3.5rem] text-white shadow-[0_35px_60px_-15px_rgba(37,99,235,0.4)] relative overflow-hidden group">
+                <div className="absolute -right-10 -top-10 w-52 h-52 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000" />
                 <div className="relative z-10">
-                  <div className="grid grid-cols-2 gap-4 opacity-80 mb-8 border-b border-white/20 pb-8 text-[10px] font-bold uppercase tracking-widest">
-                    <div className="space-y-1">
-                      <p className="text-blue-200">Tahmini Ağırlık</p>
-                      <p className="text-base text-white">{calculatedData.weight.toFixed(1)} gr</p>
-                    </div>
+                  {/* Teknik Parametre Özeti */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 opacity-90 mb-8 border-b border-white/15 pb-8 text-[10px] font-bold uppercase tracking-widest">
                     <div className="space-y-1">
                       <p className="text-blue-200">Tahmini Süre</p>
-                      <p className="text-base text-white">{formatDuration(calculatedData.hours)}</p>
+                      <p className="text-base text-white font-black">{calculatedData.formattedTime}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-blue-200">Tahmini Ağırlık</p>
+                      <p className="text-base text-white font-black">~{calculatedData.weight.toFixed(1)} gr</p>
+                    </div>
+                    <div className="space-y-1 col-span-2 sm:col-span-1">
+                      <p className="text-blue-200">Seçilen Malzeme</p>
+                      <p className="text-base text-white font-black truncate">
+                        {options.material.toUpperCase()} • {options.color || 'Standart'}
+                      </p>
                     </div>
                   </div>
 
-                  <span className="text-[10px] font-black tracking-[0.4em] opacity-60 uppercase block mb-4">Sipariş Bedeli</span>
-                  <div className="text-6xl lg:text-7xl font-black italic tracking-tighter mb-10 leading-none">
-                    {calculatedData.price} <span className="text-2xl not-italic ml-1 text-blue-200">TL</span>
+                  {/* Fiyat Gösterimi */}
+                  <div className="mb-8">
+                    <span className="text-[10px] font-black tracking-[0.4em] text-blue-200 uppercase block mb-3">Hesaplanan Sipariş Bedeli</span>
+                    <div className="text-6xl lg:text-7xl font-black italic tracking-tighter mb-4 leading-none flex items-baseline gap-2">
+                      <span>{calculatedData.price}</span>
+                      <span className="text-2xl not-italic text-blue-200">TL</span>
+                    </div>
+                    <p className="text-xs text-blue-100/70 font-medium italic">
+                      * Anycubic Kobra 2 Plus üretim süresi ({calculatedData.formattedTime}) ve malzeme analizi baz alınmıştır.
+                    </p>
                   </div>
+
+                  {/* WhatsApp Sipariş Butonu */}
                   <button 
                     onClick={() => {
+                      const cleanPhone = (whatsappNo || '905312084897').replace(/[^0-9]/g, '');
                       const message = encodeURIComponent(
-                        `*YENİ 3D BASKI SİPARİŞİ*\n` +
+                        `*YENİ 3D BASKI SİPARİŞİ* 🖨️\n` +
                         `----------------------------------\n` +
                         `*Dosya:* ${fileName}\n` +
                         `*Malzeme:* ${options.material.toUpperCase()}\n` +
-                        `*Renk:* ${options.color} (${options.colorHex})\n` +
+                        `*Renk:* ${options.color || 'Standart'}\n` +
+                        `*Hassasiyet:* ${options.resolution}mm\n` +
+                        `*İç Doluluk:* %${options.infill}\n` +
+                        `*Boyutlar (X,Y,Z):* ${stats?.x.toFixed(1)} x ${stats?.y.toFixed(1)} x ${stats?.z.toFixed(1)} mm\n` +
                         `----------------------------------\n` +
-                        `*TEKNİK DETAYLAR*\n` +
-                        `• *Hassasiyet:* ${options.resolution}mm\n` +
-                        `• *İç Doluluk:* %${options.infill}\n` +
-                        `• *Hesaplanan Ağırlık:* ~${calculatedData.weight.toFixed(1)} gr\n` +
-                        `• *Boyutlar (X,Y,Z):* ${stats?.x.toFixed(1)} x ${stats?.y.toFixed(1)} x ${stats?.z.toFixed(1)} mm\n` +
+                        `*Tahmini Süre:* ${calculatedData.formattedTime}\n` +
+                        `*Tahmini Ağırlık:* ~${calculatedData.weight.toFixed(1)} gr\n` +
+                        `*SİPARİŞ BEDELİ:* *${calculatedData.price} TL*\n` +
                         `----------------------------------\n` +
-                        `*TEKLİF TUTARI:* *${calculatedData.price} TL*\n` +
-                        `----------------------------------\n` +
-                        `_Memonex3D Analiz Motoru ile oluşturulmuştur._`
+                        `_Memonex3D analiz motoru ile oluşturulmuştur._`
                       );
-                      window.open(`https://wa.me/905312084897?text=${message}`, '_blank');
+                      window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
                     }} 
-                    className="w-full bg-slate-900 text-white py-6 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-white hover:text-blue-600 transition-all active:scale-95 shadow-2xl flex items-center justify-center gap-3"
+                    className="w-full bg-white text-slate-900 py-6 rounded-[2rem] font-black text-xs uppercase tracking-[0.2em] hover:bg-slate-900 hover:text-white transition-all active:scale-95 shadow-2xl flex items-center justify-center gap-3 group/btn"
                   >
                     <span>SİPARİŞİ ONAYLA</span>
-                    <span className="text-xl">🚀</span>
+                    <span className="text-xl transition-transform group-hover/btn:translate-x-1">🚀</span>
                   </button>
+
+                  <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-[10px] font-bold text-blue-200/70 uppercase tracking-widest">
+                    <span>✓ Ücretsiz Model Kontrolü</span>
+                    <span>✓ Hızlı Üretim</span>
+                    <span>✓ Türkiye Geneli Kargo</span>
+                  </div>
                 </div>
               </div>
             </div>
