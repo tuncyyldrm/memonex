@@ -40,6 +40,55 @@ export async function updateSettings(formData: FormData) {
     updated_at: new Date().toISOString(),
   };
 
+  const ALLOWED_SETTINGS_COLUMNS = new Set([
+    'brand_name',
+    'brand_suffix',
+    'brand_slogan',
+    'logo_subtext',
+    'ga_tracking_id',
+    'site_title_template',
+    'site_description_default',
+    'site_url',
+    'og_image_default',
+    'allow_ai_bots',
+    'accent_color_hex',
+    'border_radius_large',
+    'border_radius_section',
+    'hero_title_upper',
+    'hero_title_lower',
+    'price_currency',
+    'price_valid_until',
+    'shipping_days_min',
+    'shipping_days_max',
+    'handling_time_max',
+    'default_delivery_note',
+    'default_tech',
+    'default_material',
+    'default_precision',
+    'whatsapp_no',
+    'wa_default_msg',
+    'contact_email',
+    'instagram_url',
+    'tiktok_url',
+    'workshop_address',
+    'geo_latitude',
+    'geo_longitude',
+    'catalog_empty_msg',
+    'blog_empty_msg',
+    'not_found_emoji',
+    'not_found_title',
+    'og_image_products',
+    'og_image_blog',
+    'updated_at'
+  ]);
+
+  const sanitizedData: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(formattedData)) {
+    if (ALLOWED_SETTINGS_COLUMNS.has(key)) {
+      sanitizedData[key] = value;
+    }
+  }
+
   // 3. ID çekme işlemini de yeni asenkron supabase ile yapıyoruz
   const { data: firstRow, error: fetchError } = await supabase
     .from("site_settings")
@@ -51,10 +100,10 @@ export async function updateSettings(formData: FormData) {
     return { success: false, message: "Ayar satırı bulunamadı." };
   }
 
-  // 4. Güncelleme işlemi (Artık RLS hatası vermeyecek)
+  // 4. Güncelleme işlemi (Artık RLS ve kolon uyuşmazlığı hatası vermeyecek)
   const { error } = await supabase
     .from("site_settings")
-    .update(formattedData)
+    .update(sanitizedData)
     .eq("id", firstRow.id);
 
   if (error) {

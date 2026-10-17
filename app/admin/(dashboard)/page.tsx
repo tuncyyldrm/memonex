@@ -8,13 +8,13 @@ export default async function AdminDashboard() {
   const [blogRes, productRes, messageRes] = await Promise.all([
     supabase.from("blog_posts").select("*", { count: "exact", head: true }),
     supabase.from("products").select("*", { count: "exact", head: true }),
-    supabase.from("messages").select("*", { count: "exact", head: true }).eq('status', 'unread')
+    supabase.from("contact_messages").select("*", { count: "exact", head: true })
   ]);
 
   const stats = [
     { name: "Toplam Ürün", value: productRes.count ?? 0, icon: "📦", color: "bg-blue-600" },
     { name: "Blog Yazıları", value: blogRes.count ?? 0, icon: "📝", color: "bg-slate-900" },
-    { name: "Yeni Mesajlar", value: messageRes.count ?? 0, icon: "📧", color: "bg-orange-500" },
+    { name: "İletişim Mesajları", value: messageRes.count ?? 0, icon: "📧", color: "bg-orange-500" },
   ];
 
   return (
