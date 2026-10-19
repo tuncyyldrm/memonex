@@ -145,20 +145,20 @@ export default function BlogEditor({ params }: { params: Promise<{ id: string }>
   if (isInitialLoading) return <div className="p-20 text-center font-black text-slate-300 animate-pulse">YÜKLENİYOR...</div>;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-20 p-4 md:p-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-100 pb-8 gap-4">
+    <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8 pb-20 p-2 sm:p-4 md:p-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-6 sm:pb-8 gap-4">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase">
+          <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tighter uppercase">
             {id === 'new' ? 'YENİ MAKALE' : 'DÜZENLE'}
           </h1>
-          <p className="text-slate-400 text-sm font-bold uppercase tracking-widest mt-2">Memonex3D Content Studio</p>
+          <p className="text-slate-400 text-xs sm:text-sm font-bold uppercase tracking-widest mt-1 sm:mt-2">Memonex3D Content Studio</p>
         </div>
-        <div className="flex gap-4 w-full md:w-auto">
-          <Link href="/admin/blog" className="flex-1 md:flex-none text-center px-6 py-4 rounded-2xl font-bold text-slate-400 hover:bg-slate-50 transition">İPTAL</Link>
+        <div className="flex flex-wrap sm:flex-nowrap gap-3 sm:gap-4 w-full sm:w-auto">
+          <Link href="/admin/blog" className="flex-1 sm:flex-none text-center px-4 sm:px-6 py-3.5 sm:py-4 rounded-2xl font-bold text-slate-400 hover:bg-slate-50 transition text-xs uppercase tracking-widest">İPTAL</Link>
           <button
             onClick={handleSave}
             disabled={loading}
-            className="flex-[2] md:flex-none bg-slate-900 text-white px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl disabled:opacity-50"
+            className="flex-[2] sm:flex-none bg-slate-900 text-white px-6 sm:px-10 py-3.5 sm:py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl disabled:opacity-50 text-center"
           >
             {loading ? 'KAYDEDİLİYOR...' : 'YAYIMLA'}
           </button>
@@ -171,14 +171,19 @@ export default function BlogEditor({ params }: { params: Promise<{ id: string }>
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Makale Başlığı..."
-          className="w-full p-6 text-2xl md:text-3xl font-black border border-slate-200 rounded-[2rem] outline-none focus:ring-4 focus:ring-blue-50 transition-all"
+          className="w-full p-4 sm:p-6 text-xl sm:text-2xl md:text-3xl font-black border border-slate-200 rounded-2xl sm:rounded-[2rem] outline-none focus:ring-4 focus:ring-blue-50 transition-all"
         />
 
-<div className="bg-white border border-slate-200 rounded-[2.5rem] overflow-hidden shadow-sm">
+<div className="bg-white border border-slate-200 rounded-2xl sm:rounded-[2.5rem] overflow-hidden shadow-sm">
   <style>{`
-    .ql-toolbar.ql-snow { border: none; border-bottom: 1px solid #f1f5f9; padding: 1.5rem; background: #fafafa; }
-    .ql-container.ql-snow { border: none; font-size: 1.1rem; }
-    .ql-editor { min-height: 550px; padding: 2.5rem; line-height: 1.8; color: #334155; }
+    .ql-toolbar.ql-snow { border: none; border-bottom: 1px solid #f1f5f9; padding: 1rem; background: #fafafa; }
+    .ql-container.ql-snow { border: none; font-size: 1rem; }
+    .ql-editor { min-height: 400px; padding: 1.25rem; line-height: 1.8; color: #334155; }
+    @media (min-width: 640px) {
+      .ql-toolbar.ql-snow { padding: 1.5rem; }
+      .ql-container.ql-snow { font-size: 1.1rem; }
+      .ql-editor { min-height: 550px; padding: 2.5rem; }
+    }
     .ql-editor img { border-radius: 1.5rem; margin: 2rem 0; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); max-width: 100%; height: auto; }
     .ql-editor h2 { font-weight: 800; color: #0f172a; margin-top: 2rem; }
   `}</style>

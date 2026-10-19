@@ -45,10 +45,10 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
-      <div className="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/50 p-10 border border-slate-100">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-black tracking-tighter uppercase mb-2">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6 font-sans">
+      <div className="max-w-md w-full bg-white rounded-2xl sm:rounded-[2.5rem] shadow-2xl shadow-slate-200/50 p-6 sm:p-10 border border-slate-100">
+        <div className="text-center mb-8 sm:mb-10">
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tighter uppercase mb-2">
             MEMONEX<span className="text-blue-600 italic">3D</span>
           </h1>
           <div className="h-1 w-12 bg-blue-600 mx-auto rounded-full mb-4" />

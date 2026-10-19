@@ -11,37 +11,37 @@ export default async function AdminBlogList() {
     .order("created_at", { ascending: false });
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-6 sm:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Üst Başlık Bölümü */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-slate-100 pb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-6 border-b border-slate-100 pb-6 sm:pb-8">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase italic">
+          <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tighter uppercase italic">
             BLOG <span className="text-blue-600">EDİTÖRÜ</span>
           </h1>
-          <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] mt-2 flex items-center gap-2">
+          <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] mt-1 sm:mt-2 flex items-center gap-2">
             <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
             Toplam {posts?.length || 0} İçerik Yönetiliyor
           </p>
         </div>
         <Link 
           href="/admin/blog/new" 
-          className="bg-slate-900 text-white px-10 py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] hover:bg-blue-600 transition-all shadow-2xl shadow-slate-900/10 active:scale-95"
+          className="bg-slate-900 text-white px-6 sm:px-10 py-3.5 sm:py-5 rounded-2xl sm:rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] hover:bg-blue-600 transition-all shadow-2xl shadow-slate-900/10 active:scale-95 w-full sm:w-auto text-center"
         >
           + YENİ MAKALE OLUŞTUR
         </Link>
       </div>
 
       {/* Liste / Tablo Yapısı */}
-      <div className="bg-white border border-slate-100 rounded-[3rem] overflow-hidden shadow-sm">
+      <div className="bg-white border border-slate-100 rounded-2xl sm:rounded-[3rem] overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[680px]">
             <thead className="bg-slate-50/50 border-b border-slate-100">
               <tr>
-                <th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Kapak</th>
-                <th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">İçerik Detayları</th>
-                <th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Durum</th>
-                <th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Oluşturma</th>
-                <th className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Yönet</th>
+                <th className="p-4 sm:p-6 lg:p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Kapak</th>
+                <th className="p-4 sm:p-6 lg:p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">İçerik Detayları</th>
+                <th className="p-4 sm:p-6 lg:p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Durum</th>
+                <th className="p-4 sm:p-6 lg:p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Oluşturma</th>
+                <th className="p-4 sm:p-6 lg:p-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Yönet</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -51,8 +51,8 @@ export default async function AdminBlogList() {
 
                   return (
                     <tr key={post.id} className="group hover:bg-blue-50/30 transition-all duration-300">
-                      <td className="p-8 w-32">
-                        <div className="w-20 h-14 bg-slate-100 rounded-2xl overflow-hidden border border-slate-100 shadow-inner group-hover:scale-105 transition-transform duration-500">
+                      <td className="p-4 sm:p-6 lg:p-8 w-28 sm:w-32">
+                        <div className="w-16 h-12 sm:w-20 sm:h-14 bg-slate-100 rounded-xl sm:rounded-2xl overflow-hidden border border-slate-100 shadow-inner group-hover:scale-105 transition-transform duration-500">
                           {coverImage ? (
                             /* eslint-disable-next-line @next/next/no-img-element */
                             <img 
@@ -68,7 +68,7 @@ export default async function AdminBlogList() {
                         </div>
                       </td>
 
-                      <td className="p-8">
+                      <td className="p-4 sm:p-6 lg:p-8">
                         <div className="max-w-md">
                           <div className="font-black text-slate-900 text-sm uppercase tracking-tight group-hover:text-blue-600 transition-colors leading-tight truncate">
                             {post.title}
@@ -79,29 +79,29 @@ export default async function AdminBlogList() {
                         </div>
                       </td>
 
-                      <td className="p-8">
+                      <td className="p-4 sm:p-6 lg:p-8">
                         {post.published ? (
-                          <div className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase tracking-widest border border-emerald-100">
+                          <div className="inline-flex items-center gap-2 py-1.5 px-3 sm:px-4 rounded-full bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase tracking-widest border border-emerald-100 whitespace-nowrap">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                             YAYINDA
                           </div>
                         ) : (
-                          <div className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-slate-100 text-slate-500 text-[9px] font-black uppercase tracking-widest border border-slate-200">
+                          <div className="inline-flex items-center gap-2 py-1.5 px-3 sm:px-4 rounded-full bg-slate-100 text-slate-500 text-[9px] font-black uppercase tracking-widest border border-slate-200 whitespace-nowrap">
                             TASLAK
                           </div>
                         )}
                       </td>
 
-                      <td className="p-8 text-[11px] text-slate-400 font-black uppercase tracking-tighter">
+                      <td className="p-4 sm:p-6 lg:p-8 text-[11px] text-slate-400 font-black uppercase tracking-tighter whitespace-nowrap">
                         {formatDate(post.created_at)}
                       </td>
 
-                      <td className="p-8 text-right">
+                      <td className="p-4 sm:p-6 lg:p-8 text-right whitespace-nowrap">
                         <Link 
                           href={`/admin/blog/${post.id}`} 
-                          className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-slate-900 text-white hover:bg-blue-600 transition-all shadow-xl shadow-slate-900/10 active:scale-90"
+                          className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-slate-900 text-white hover:bg-blue-600 transition-all shadow-xl shadow-slate-900/10 active:scale-90"
                         >
-                          <span className="text-lg">✎</span>
+                          <span className="text-base sm:text-lg">✎</span>
                         </Link>
                       </td>
                     </tr>

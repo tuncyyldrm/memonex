@@ -35,7 +35,7 @@ export default function SettingsForm({ initialData: s }: { initialData: Settings
   return (
     <form action={clientAction} id="settings-form" className="space-y-12 pb-20">
       {status && (
-        <div className="fixed top-5 right-5 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl z-[100] animate-in fade-in slide-in-from-top-4 font-bold text-[10px] border border-blue-500/50 backdrop-blur-md uppercase tracking-widest">
+        <div className="fixed top-4 right-4 left-4 sm:left-auto max-w-md bg-slate-900 text-white px-5 sm:px-6 py-3.5 sm:py-4 rounded-2xl shadow-2xl z-[100] animate-in fade-in slide-in-from-top-4 font-bold text-[10px] border border-blue-500/50 backdrop-blur-md uppercase tracking-widest text-center sm:text-left">
           {status}
         </div>
       )}
@@ -192,10 +192,10 @@ export default function SettingsForm({ initialData: s }: { initialData: Settings
         </div>
       </section>
 
-      <div className="flex justify-end pt-12">
+      <div className="flex justify-end pt-8 sm:pt-12">
           <button 
             type="submit"
-            className="bg-blue-600 text-white px-12 py-5 rounded-3xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-slate-900 transition-all active:scale-95 shadow-blue-500/20"
+            className="w-full sm:w-auto bg-blue-600 text-white px-8 sm:px-12 py-4 sm:py-5 rounded-2xl sm:rounded-3xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-slate-900 transition-all active:scale-95 shadow-blue-500/20 text-center"
           >
             Tüm Ayarları Kaydet
           </button>

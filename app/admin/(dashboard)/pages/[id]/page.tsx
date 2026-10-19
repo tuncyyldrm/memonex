@@ -104,38 +104,38 @@ const handleUpdate = async (e: React.FormEvent) => {
       <form onSubmit={handleUpdate} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
         
         {/* ANA İÇERİK PANELİ */}
-        <div className="bg-white p-8 md:p-12 rounded-[3.5rem] border border-slate-100 shadow-sm space-y-10">
-          <header className="border-b border-slate-50 pb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="bg-white p-5 sm:p-8 md:p-12 rounded-2xl sm:rounded-[3.5rem] border border-slate-100 shadow-sm space-y-8 sm:space-y-10">
+          <header className="border-b border-slate-50 pb-6 sm:pb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <h2 className="text-3xl font-black tracking-tighter uppercase italic text-slate-900">
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tighter uppercase italic text-slate-900">
                 SAYFA <span className="text-blue-600">İÇERİĞİ</span>
               </h2>
-              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Sistem UUID: {id}</p>
+              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1 truncate max-w-[280px] sm:max-w-none">Sistem UUID: {id}</p>
             </div>
             <button 
               type="button"
               onClick={generateSlug}
-              className="text-[9px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 px-4 py-2 rounded-xl hover:bg-blue-600 hover:text-white transition-all"
+              className="text-[9px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 px-4 py-2.5 rounded-xl hover:bg-blue-600 hover:text-white transition-all w-full sm:w-auto text-center"
             >
               Başlıktan Slug Üret ⚡
             </button>
           </header>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-            <div className="flex flex-col gap-3">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">Sayfa Başlığı</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10">
+            <div className="flex flex-col gap-2 sm:gap-3">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-2 sm:ml-4">Sayfa Başlığı</label>
               <input 
                 required
                 value={formData.title}
                 placeholder="Örn: Hakkımızda"
-                className="bg-slate-50 border border-slate-100 p-6 rounded-2xl text-base font-bold text-slate-900 focus:ring-4 ring-blue-500/5 outline-none transition-all placeholder:opacity-30"
+                className="bg-slate-50 border border-slate-100 p-4 sm:p-6 rounded-2xl text-base font-bold text-slate-900 focus:ring-4 ring-blue-500/5 outline-none transition-all placeholder:opacity-30"
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
               />
             </div>
-            <div className="flex flex-col gap-3">
-              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-4">URL Uzantısı (Slug)</label>
+            <div className="flex flex-col gap-2 sm:gap-3">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-2 sm:ml-4">URL Uzantısı (Slug)</label>
               <div className="relative">
-                <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 font-bold">/</span>
+                <span className="absolute left-5 sm:left-6 top-1/2 -translate-y-1/2 text-slate-300 font-bold">/</span>
                 <input 
                   required
                   value={formData.slug}
@@ -197,7 +197,7 @@ const handleUpdate = async (e: React.FormEvent) => {
         <button 
           type="submit"
           disabled={updating}
-          className="w-full bg-blue-600 text-white p-10 rounded-[3rem] font-black uppercase tracking-[0.5em] text-xs hover:bg-slate-900 transition-all shadow-2xl shadow-blue-600/20 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-4"
+          className="w-full bg-blue-600 text-white py-4 sm:py-6 px-6 rounded-2xl sm:rounded-[2.5rem] font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-xs hover:bg-slate-900 transition-all shadow-2xl shadow-blue-600/20 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-4"
         >
           {updating ? (
             <>

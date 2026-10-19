@@ -101,11 +101,11 @@ export default function FilamentManager() {
   };
 
   return (
-    <div className="p-4 md:p-8 space-y-8 max-w-6xl mx-auto min-h-screen">
+    <div className="p-0 sm:p-2 space-y-6 sm:space-y-8 max-w-6xl mx-auto">
       
       {/* HEADER */}
-      <div className="flex justify-between items-center border-b border-slate-100 pb-6">
-        <h1 className="text-3xl font-black tracking-tighter text-slate-900 uppercase italic">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-6">
+        <h1 className="text-2xl sm:text-3xl font-black tracking-tighter text-slate-900 uppercase italic">
           Filament <span className="text-blue-600 italic">Envanteri</span>
         </h1>
         {editId && (
@@ -116,7 +116,7 @@ export default function FilamentManager() {
       </div>
 
       {/* DİNAMİK FORM (EKLE / GÜNCELLE) */}
-      <div className={`p-6 md:p-8 rounded-[2.5rem] border-2 transition-all grid grid-cols-1 md:grid-cols-5 gap-4 items-end ${editId ? 'bg-blue-50/50 border-blue-200' : 'bg-slate-50 border-slate-100'}`}>
+      <div className={`p-5 sm:p-8 rounded-2xl sm:rounded-[2.5rem] border-2 transition-all grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end ${editId ? 'bg-blue-50/50 border-blue-200' : 'bg-slate-50 border-slate-100'}`}>
         <div className="space-y-2">
           <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Malzeme</label>
           <select 
@@ -131,20 +131,20 @@ export default function FilamentManager() {
           </select>
         </div>
 
-        <div className="space-y-2 md:col-span-2 text-slate-800">
+        <div className="space-y-2 sm:col-span-2 text-slate-800">
           <label className="text-[10px] font-black uppercase text-slate-400 ml-2">Renk Adı & Kod</label>
           <div className="flex gap-2">
             <input 
               type="text" placeholder="Renk ismi..."
               value={formData.color_name}
               onChange={(e) => setFormData({...formData, color_name: e.target.value})}
-              className="flex-1 bg-white border-2 border-slate-200 rounded-2xl p-4 font-bold text-sm outline-none focus:border-blue-600"
+              className="flex-1 bg-white border-2 border-slate-200 rounded-2xl p-4 font-bold text-sm outline-none focus:border-blue-600 min-w-0"
             />
             <input 
               type="color" 
               value={formData.color_hex}
               onChange={(e) => setFormData({...formData, color_hex: e.target.value})}
-              className="w-16 h-[58px] bg-white border-2 border-slate-200 rounded-2xl p-1 cursor-pointer"
+              className="w-14 sm:w-16 h-[58px] bg-white border-2 border-slate-200 rounded-2xl p-1 cursor-pointer flex-shrink-0"
             />
           </div>
         </div>
@@ -162,7 +162,7 @@ export default function FilamentManager() {
         <button 
           onClick={handleSubmit}
           disabled={actionLoading}
-          className={`h-[58px] rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 ${
+          className={`h-[58px] sm:col-span-2 md:col-span-1 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 ${
             editId ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-slate-900 text-white hover:bg-blue-600'
           }`}
         >
@@ -176,26 +176,26 @@ export default function FilamentManager() {
           <div className="text-center py-20 animate-pulse text-slate-300 font-black uppercase tracking-widest">Yükleniyor...</div>
         ) : (
           filaments.map((f) => (
-            <div key={f.id} className={`p-4 rounded-[2rem] border-2 flex items-center justify-between transition-all ${f.is_active ? 'bg-white border-slate-50 shadow-sm' : 'bg-slate-50/50 border-transparent opacity-60'}`}>
-              <div className="flex items-center gap-5">
-                <div className="w-12 h-12 rounded-2xl shadow-inner border-2 border-white" style={{ backgroundColor: f.color_hex }} />
-                <div>
-                  <div className="flex items-center gap-2">
+            <div key={f.id} className={`p-4 rounded-2xl sm:rounded-[2rem] border-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 transition-all ${f.is_active ? 'bg-white border-slate-50 shadow-sm' : 'bg-slate-50/50 border-transparent opacity-60'}`}>
+              <div className="flex items-center gap-4 sm:gap-5 min-w-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl shadow-inner border-2 border-white flex-shrink-0" style={{ backgroundColor: f.color_hex }} />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-[8px] font-black px-2 py-0.5 rounded bg-slate-900 text-white uppercase">{f.material}</span>
-                    <h3 className="font-black text-slate-800 text-sm uppercase italic">{f.color_name}</h3>
+                    <h3 className="font-black text-slate-800 text-sm uppercase italic truncate">{f.color_name}</h3>
                   </div>
                   <p className="text-[9px] font-bold text-slate-400 uppercase mt-1">Katsayı: x{f.price_multiplier}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button onClick={() => toggleActive(f.id, f.is_active)} className={`p-3 rounded-xl transition-all ${f.is_active ? 'text-green-500 bg-green-50' : 'text-slate-300 bg-slate-100'}`}>
+              <div className="flex items-center gap-2 self-end sm:self-center">
+                <button onClick={() => toggleActive(f.id, f.is_active)} className={`p-2.5 sm:p-3 rounded-xl transition-all ${f.is_active ? 'text-green-500 bg-green-50' : 'text-slate-300 bg-slate-100'}`} title="Durum Değiştir">
                   <Icons.Power />
                 </button>
-                <button onClick={() => startEdit(f)} className="p-3 text-blue-500 bg-blue-50 rounded-xl hover:bg-blue-500 hover:text-white transition-all">
+                <button onClick={() => startEdit(f)} className="p-2.5 sm:p-3 text-blue-500 bg-blue-50 rounded-xl hover:bg-blue-500 hover:text-white transition-all" title="Düzenle">
                   <Icons.Edit />
                 </button>
-                <button onClick={() => handleDelete(f.id)} className="p-3 text-red-400 bg-red-50 rounded-xl hover:bg-red-500 hover:text-white transition-all">
+                <button onClick={() => handleDelete(f.id)} className="p-2.5 sm:p-3 text-red-400 bg-red-50 rounded-xl hover:bg-red-500 hover:text-white transition-all" title="Sil">
                   <Icons.Trash />
                 </button>
               </div>

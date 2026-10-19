@@ -168,49 +168,49 @@ const handleDelete = async () => {
   );
 
   return (
-    <div className="max-w-6xl mx-auto space-y-10 pb-20 px-4">
+    <div className="max-w-6xl mx-auto space-y-6 sm:space-y-10 pb-20 px-1 sm:px-4">
       {/* Header */}
-      <div className="flex justify-between items-center border-b border-slate-100 pb-8 mt-10">
-        <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-6 sm:pb-8 mt-2 sm:mt-6">
+        <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tighter uppercase">
           {id === 'new' ? '✨ Yeni Ürün' : '🛠️ Düzenle'}
         </h1>
-        <div className="flex gap-4">
-  {/* SADECE DÜZENLEME MODUNDA GÖRÜNÜR */}
-  {id !== 'new' && (
-    <button 
-      onClick={handleDelete}
-      disabled={loading}
-      className="px-6 py-4 rounded-2xl font-bold text-red-500 hover:bg-red-50 transition-all text-xs tracking-widest uppercase border border-red-100 disabled:opacity-50"
-    >
-      {loading ? 'SİLİNİYOR...' : 'Ürünü Sil'}
-    </button>
-  )}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 w-full sm:w-auto">
+          {/* SADECE DÜZENLEME MODUNDA GÖRÜNÜR */}
+          {id !== 'new' && (
+            <button 
+              onClick={handleDelete}
+              disabled={loading}
+              className="flex-1 sm:flex-none px-4 sm:px-6 py-3 sm:py-4 rounded-2xl font-bold text-red-500 hover:bg-red-50 transition-all text-xs tracking-widest uppercase border border-red-100 disabled:opacity-50 text-center"
+            >
+              {loading ? 'SİLİNİYOR...' : 'Ürünü Sil'}
+            </button>
+          )}
 
-  <Link href="/admin/products" className="px-6 py-4 rounded-2xl font-bold text-slate-400 hover:text-slate-900 transition-all text-xs tracking-widest uppercase">
-    İptal
-  </Link>
-  
-  <button 
-    onClick={handleSave} 
-    disabled={loading} 
-    className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-900 transition-all shadow-xl shadow-blue-100 active:scale-95 disabled:opacity-50"
-  >
-    {loading ? 'İŞLEM YAPILIYOR...' : 'DEĞİŞİKLİKLERİ KAYDET'}
-  </button>
-</div>
+          <Link href="/admin/products" className="flex-1 sm:flex-none px-4 sm:px-6 py-3 sm:py-4 rounded-2xl font-bold text-slate-400 hover:text-slate-900 transition-all text-xs tracking-widest uppercase text-center">
+            İptal
+          </Link>
+          
+          <button 
+            onClick={handleSave} 
+            disabled={loading} 
+            className="w-full sm:w-auto bg-blue-600 text-white px-6 sm:px-10 py-3.5 sm:py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-900 transition-all shadow-xl shadow-blue-100 active:scale-95 disabled:opacity-50 text-center"
+          >
+            {loading ? 'İŞLEM YAPILIYOR...' : 'DEĞİŞİKLİKLERİ KAYDET'}
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-10">
         {/* SOL KOLON: İçerik */}
-        <div className="lg:col-span-2 space-y-8">
-          <section className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-6">
+        <div className="lg:col-span-2 space-y-6 sm:space-y-8">
+          <section className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-[2.5rem] border border-slate-200 shadow-sm space-y-4 sm:space-y-6">
             <h2 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em]">Temel Bilgiler</h2>
             <div className="space-y-4">
               <input 
                 type="text" 
                 value={formData.name} 
                 onChange={(e) => setFormData({...formData, name: e.target.value})} 
-                className="w-full p-5 text-xl font-bold border border-slate-100 bg-slate-50/50 rounded-2xl outline-none focus:ring-4 focus:ring-blue-50 transition-all" 
+                className="w-full p-4 sm:p-5 text-base sm:text-xl font-bold border border-slate-100 bg-slate-50/50 rounded-2xl outline-none focus:ring-4 focus:ring-blue-50 transition-all" 
                 placeholder="Ürün Adı" 
               />
               <textarea 
@@ -223,8 +223,8 @@ const handleDelete = async () => {
             </div>
           </section>
 
-          <section className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
-            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Ürün Galerisi</h2>
+          <section className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-[2.5rem] border border-slate-200 shadow-sm">
+            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4 sm:mb-6">Ürün Galerisi</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {formData.gallery.map((url, index) => (
                 <div key={index} className="aspect-square rounded-2xl overflow-hidden relative group border border-slate-100 shadow-sm">
@@ -246,7 +246,7 @@ const handleDelete = async () => {
             </div>
           </section>
 
-          <section className="bg-slate-900 p-8 rounded-[2.5rem] text-white space-y-6">
+          <section className="bg-slate-900 p-5 sm:p-8 rounded-2xl sm:rounded-[2.5rem] text-white space-y-4 sm:space-y-6">
             <h2 className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]">Arama Motoru Ayarları</h2>
             <div className="space-y-4">
               <input 
@@ -267,8 +267,8 @@ const handleDelete = async () => {
         </div>
 
         {/* SAĞ KOLON: Ayarlar */}
-        <div className="space-y-8">
-          <section className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm">
+        <div className="space-y-6 sm:space-y-8">
+          <section className="bg-white p-5 sm:p-6 rounded-2xl sm:rounded-[2.5rem] border border-slate-200 shadow-sm">
             <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Ana Görsel (Kapak)</h2>
             <div className="aspect-square rounded-3xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden relative flex items-center justify-center group">
               {formData.image ? (
@@ -290,7 +290,7 @@ const handleDelete = async () => {
             </div>
           </section>
 
-          <section className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-6">
+          <section className="bg-white p-5 sm:p-8 rounded-2xl sm:rounded-[2.5rem] border border-slate-200 shadow-sm space-y-4 sm:space-y-6">
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Fiyat (TL)</label>
               <input 
